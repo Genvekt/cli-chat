@@ -6,7 +6,7 @@ import (
   "log"
   "net"
 
-  "github.com/brianvoe/gofakeit/v7"
+  gofakeit "github.com/brianvoe/gofakeit/v7"
   "google.golang.org/grpc"
   "google.golang.org/grpc/reflection"
   "google.golang.org/protobuf/types/known/emptypb"
