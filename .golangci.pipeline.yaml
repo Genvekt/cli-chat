@@ -28,6 +28,7 @@ linters:
     - goconst
     - gosec
     - govet
+    - goimports
     - ineffassign
     - gosimple
     - staticcheck

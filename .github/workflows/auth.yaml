@@ -1,4 +1,4 @@
-name: lint and test auth service
+name: auth service
 on:
   push:
     branches:
@@ -55,14 +55,14 @@ jobs:
           #
           # Note: By default, the `.golangci.yml` file should be at the root of the repository.
           # The location of the configuration file can be changed by using `--config=`
-          args: --timeout=30m --config=./.golangci.pipeline.yaml
+          args: --timeout=30m --config=../../.golangci.pipeline.yaml
 
           # Optional: show only new issues if it's a pull request. The default value is `false`.
           # only-new-issues: true
 
           # Optional: if set to true, then all caching functionality will be completely disabled,
           #           takes precedence over all other caching options.
-          # skip-cache: true
+          skip-cache: true
 
           # Optional: if set to true, then the action won't cache or restore ~/go/pkg.
           # skip-pkg-cache: true
