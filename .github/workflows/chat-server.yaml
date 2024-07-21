@@ -3,11 +3,13 @@ on:
   push:
     branches:
       - main
+      - dev
     paths:
       - 'services/chat_server/**'
   pull_request:
     branches:
       - main
+      - dev
     paths:
       - 'services/chat_server/**'
 
