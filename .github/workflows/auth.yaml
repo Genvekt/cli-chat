@@ -16,7 +16,6 @@ on:
 env:
   SERVICE_PATH: ./services/auth
   SERVICE_NAME: auth
-  DOCKER_REGISTRY_LOGIN_URL: cr.selcloud.ru
   DOCKER_REGISTRY_URL: cr.selcloud.ru/genvekt-cli-chat
 
 jobs:
@@ -92,7 +91,7 @@ jobs:
         uses: docker/setup-buildx-action@v2
 
       - name: Login to Docker Registry
-        run: docker login -u ${{ secrets.DOCKER_REGISTRY_USERNAME }} -p ${{ secrets.DOCKER_REGISTRY_PASSWORD }} $DOCKER_REGISTRY_LOGIN_URL
+        run: docker login -u ${{ secrets.DOCKER_REGISTRY_USERNAME }} -p ${{ secrets.DOCKER_REGISTRY_PASSWORD }} $DOCKER_REGISTRY_URL
 
       - name: Build and Push Docker Image
         run: |
