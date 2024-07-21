@@ -94,10 +94,9 @@ jobs:
       - name: Login to Docker Registry
         run: docker login -u ${{ secrets.DOCKER_REGISTRY_USERNAME }} -p ${{ secrets.DOCKER_REGISTRY_PASSWORD }} $DOCKER_REGISTRY_LOGIN_URL
 
-      - name: Set image tag
-        run: echo "IMAGE_TAG=$(git rev-parse --short $GITHUB_SHA)" >> "$GITHUB_ENV"
-
       - name: Build and Push Docker Image
         run: |
+          IMAGE_TAG=$(git rev-parse --short "$GITHUB_SHA")
           docker buildx create --use
-          docker buildx build --no-cache --push --tag $DOCKER_REGISTRY_URL/$SERVICE_NAME:${{ env.IMAGE_TAG }} -f $SERVICE_PATH/Dockerfile .
+          docker buildx build --no-cache --push --tag $DOCKER_REGISTRY_URL/$SERVICE_NAME:$IMAGE_TAG -f $SERVICE_PATH/Dockerfile
+          echo "Pushed image $DOCKER_REGISTRY_URL/$SERVICE_NAME:$IMAGE_TAG"
