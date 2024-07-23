@@ -13,6 +13,6 @@ WORKDIR /root
 ADD migrations/*.sql migrations/
 ADD migrator/migrator-prod.sh .
 
-RUN chmod +x migrator/migrator-prod.sh
+RUN chmod +x migrator-prod.sh
 
-ENTRYPOINT ["bash", "migrator/migrator-prod.sh"]
+ENTRYPOINT ["bash", "migrator-prod.sh"]
