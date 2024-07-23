@@ -87,4 +87,4 @@ jobs:
             # Login into Selectel Registry
             docker login -u ${{secrets.DOCKER_REGISTRY_USERNAME}} -p ${{secrets.DOCKER_REGISTRY_PASSWORD}} ${{env.DOCKER_REGISTRY_URL}}
             cd ~/.deploy/auth/db/
-            docker compose -f ./docker-compose.prod.yml up -d
+            docker-compose -f ./docker-compose.prod.yml up -d
