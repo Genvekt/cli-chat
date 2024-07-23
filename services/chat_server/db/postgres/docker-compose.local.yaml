@@ -4,7 +4,7 @@ volumes:
   chat-server_postgres_volume:
 
 services:
-  pg:
+  chat-server_pg:
     image: postgres:14-alpine3.17
     container_name: chat-server_pg
     env_file:
@@ -16,7 +16,7 @@ services:
     networks:
       - chat-server
 
-  migrator:
+  chat-server_migrator:
     container_name: chat-server_migrator
     image: chat-server_migrator
     build:
