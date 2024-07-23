@@ -63,6 +63,7 @@ jobs:
           eval `ssh-agent -s`
           touch key-file
           echo "${{secrets.SSH_KEY}}" >> key-file
+          chmod 600 key-file
           ssh-add key-file
 
       - name: Stop previous version
