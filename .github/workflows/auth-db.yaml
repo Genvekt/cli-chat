@@ -55,6 +55,7 @@ jobs:
         run: |
           touch ${{ env.DB_DIR }}/.env
           echo "MIGRATOR_IMAGE=${{ env.DOCKER_REGISTRY_URL }}/${{ env.MIGRATOR_IMAGE }}:${{ steps.meta.outputs.tag }}" >> ${{ env.DB_DIR }}/.env
+          cat ${{ env.DB_DIR }}/.env
           docker-compose -f ${{ env.DB_DIR }}/docker-compose-prod.yaml build
 
       - name: Push to registry
