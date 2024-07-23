@@ -12,5 +12,6 @@ FROM alpine:latest
 
 WORKDIR /root/
 COPY --from=builder /app/services/auth/bin/main .
+COPY --from=builder /app/services/auth/local.env .
 
-CMD ["./main"]
+CMD ["./main --config-path ./local.env"]
