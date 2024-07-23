@@ -45,7 +45,7 @@ func (s *server) Get(_ context.Context, req *userApi.GetRequest) (*userApi.GetRe
 	}
 
 	return &userApi.GetResponse{
-		Id:        dbUser.Id,
+		Id:        dbUser.ID,
 		Name:      dbUser.Name,
 		Email:     dbUser.Email,
 		Role:      userApi.UserRole(dbUser.Role),
@@ -70,7 +70,7 @@ func (s *server) Create(_ context.Context, req *userApi.CreateRequest) (*userApi
 	}
 
 	return &userApi.CreateResponse{
-		Id: newUser.Id,
+		Id: newUser.ID,
 	}, nil
 }
 

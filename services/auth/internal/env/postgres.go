@@ -26,6 +26,7 @@ type postgresConfigEnv struct {
 	dbPort     string
 }
 
+// NewPostgresConfigEnv retrieves new postgresConfigEnv instance
 func NewPostgresConfigEnv() (*postgresConfigEnv, error) {
 	dbName := os.Getenv(dbNameEnv)
 	if dbName == "" {

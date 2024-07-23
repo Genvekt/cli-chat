@@ -44,7 +44,7 @@ func (s *server) Create(_ context.Context, req *chatApi.CreateRequest) (*chatApi
 	}
 
 	return &chatApi.CreateResponse{
-		Id: newChat.Id,
+		Id: newChat.ID,
 	}, nil
 }
 

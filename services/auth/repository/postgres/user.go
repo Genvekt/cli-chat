@@ -12,6 +12,7 @@ import (
 	"github.com/jackc/pgx/v4/pgxpool"
 
 	"github.com/Genvekt/cli-chat/services/auth/model"
+	"github.com/Genvekt/cli-chat/services/auth/repository"
 )
 
 const (
@@ -24,11 +25,15 @@ const (
 	updatedAtColumn = "updated_at"
 )
 
+var _ repository.UserRepository = (*UserRepositoryPostgres)(nil)
+
+// UserRepositoryPostgres implements repository.UserRepository for Postgres data source
 type UserRepositoryPostgres struct {
 	ctx context.Context
 	db  *pgxpool.Pool
 }
 
+// NewUserRepositoryPostgres creates UserRepositoryPostgres instance
 func NewUserRepositoryPostgres(ctx context.Context, db *pgxpool.Pool) *UserRepositoryPostgres {
 	return &UserRepositoryPostgres{
 		ctx: ctx,
@@ -36,6 +41,7 @@ func NewUserRepositoryPostgres(ctx context.Context, db *pgxpool.Pool) *UserRepos
 	}
 }
 
+// Get retrieves user by id
 func (r *UserRepositoryPostgres) Get(id int64) (*model.User, error) {
 	user := &model.User{}
 
@@ -52,7 +58,7 @@ func (r *UserRepositoryPostgres) Get(id int64) (*model.User, error) {
 		return nil, fmt.Errorf("failed to build query: %v", err)
 	}
 
-	err = r.db.QueryRow(r.ctx, query, args...).Scan(&user.Id, &user.Name, &user.Email, &user.Role, &user.CreatedAt, &user.UpdatedAt)
+	err = r.db.QueryRow(r.ctx, query, args...).Scan(&user.ID, &user.Name, &user.Email, &user.Role, &user.CreatedAt, &user.UpdatedAt)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, nil
@@ -62,6 +68,7 @@ func (r *UserRepositoryPostgres) Get(id int64) (*model.User, error) {
 	return user, nil
 }
 
+// Create adds new user to db
 func (r *UserRepositoryPostgres) Create(user *model.User) (*model.User, error) {
 	creationTime := time.Now().In(time.UTC)
 	builderInsert := sq.Insert(userTable).
@@ -74,12 +81,14 @@ func (r *UserRepositoryPostgres) Create(user *model.User) (*model.User, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to build query: %v", err)
 	}
-	err = r.db.QueryRow(r.ctx, query, args...).Scan(&user.Id)
+	err = r.db.QueryRow(r.ctx, query, args...).Scan(&user.ID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to insert user: %v", err)
 	}
 	return user, nil
 }
+
+// Update updates user in db
 func (r *UserRepositoryPostgres) Update(user *model.User) error {
 	updateTime := time.Now().In(time.UTC)
 	builderUpdate := sq.Update(userTable).PlaceholderFormat(sq.Dollar).
@@ -87,7 +96,7 @@ func (r *UserRepositoryPostgres) Update(user *model.User) error {
 		Set(emailColumn, user.Email).
 		Set(roleColumn, user.Role).
 		Set(updatedAtColumn, updateTime).
-		Where(sq.Eq{idColumn: user.Id})
+		Where(sq.Eq{idColumn: user.ID})
 
 	query, args, err := builderUpdate.ToSql()
 	if err != nil {
@@ -96,11 +105,12 @@ func (r *UserRepositoryPostgres) Update(user *model.User) error {
 
 	_, err = r.db.Exec(r.ctx, query, args...)
 	if err != nil {
-		log.Fatalf("failed to update user with id %d: %v", user.Id, err)
+		log.Fatalf("failed to update user with id %d: %v", user.ID, err)
 	}
 	return nil
 }
 
+// Delete removes user by id
 func (r *UserRepositoryPostgres) Delete(id int64) error {
 	builderDelete := sq.Delete(userTable).PlaceholderFormat(sq.Dollar).
 		Where(sq.Eq{idColumn: id})

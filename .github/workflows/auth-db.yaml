@@ -1,4 +1,4 @@
-name: DB for auth service
+name: auth DB
 on:
   push:
     branches:

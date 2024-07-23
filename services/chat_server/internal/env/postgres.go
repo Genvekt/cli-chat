@@ -26,6 +26,7 @@ type postgresConfigEnv struct {
 	dbPort     string
 }
 
+// NewPostgresConfigEnv retrieves new postgresConfigEnv instance
 func NewPostgresConfigEnv() (*postgresConfigEnv, error) {
 	dbName := os.Getenv(dbNameEnv)
 	if dbName == "" {
@@ -56,6 +57,7 @@ func NewPostgresConfigEnv() (*postgresConfigEnv, error) {
 	}, nil
 }
 
+// DSN returns postgres connection string
 func (p *postgresConfigEnv) DSN() string {
 	return fmt.Sprintf(dbDSNTemplate, p.dbHost, p.dbPort, p.dbName, p.dbUser, p.dbPassword)
 }

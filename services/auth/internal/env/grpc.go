@@ -20,6 +20,7 @@ type gRPCConfigEnv struct {
 	port string
 }
 
+// NewGRPCConfigEnv retrieves new gRPCConfigEnv instance
 func NewGRPCConfigEnv() (*gRPCConfigEnv, error) {
 	host := os.Getenv(grpcHostEnv)
 	if host == "" {
@@ -32,6 +33,7 @@ func NewGRPCConfigEnv() (*gRPCConfigEnv, error) {
 	return &gRPCConfigEnv{host: host, port: port}, nil
 }
 
+// Address provides host:port string
 func (e *gRPCConfigEnv) Address() string {
 	return net.JoinHostPort(e.host, e.port)
 }
