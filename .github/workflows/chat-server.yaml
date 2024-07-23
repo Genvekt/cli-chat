@@ -97,7 +97,7 @@ jobs:
         with:
           push: true # github.event_name != 'pull_request'
           tags: ${{ steps.meta.outputs.tags }}
-          file: ${{ env.SERVICE_PATH }}/Dockerfile
+          file: ${{ env.SERVICE_PATH }}/prod.Dockerfile
           context: .
           no-cache: true
           provenance: false  # With this setting tags appear in registry!
