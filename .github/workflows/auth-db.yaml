@@ -39,10 +39,9 @@ jobs:
         run: |
           echo "tag=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
 
-      - name: Setup env
+      - name: Setup Image names
         run: |
-          touch ${{ env.DB_DIR }}/.env
-          echo "MIGRATOR_IMAGE=${{ env.DOCKER_REGISTRY_URL }}/${{ env.MIGRATOR_IMAGE }}:${{ steps.meta.outputs.tag }}" >> ${{ env.DB_DIR }}/.env
+          echo "MIGRATOR_IMAGE=${{ env.DOCKER_REGISTRY_URL }}/${{ env.MIGRATOR_IMAGE }}:${{ steps.meta.outputs.tag }}" >> "$GITHUB_ENV"
 
       - name: Login to Registry
         uses: docker/login-action@v3
@@ -53,9 +52,7 @@ jobs:
 
       - name: Build migrator
         run: |
-          touch ${{ env.DB_DIR }}/.env
-          echo "MIGRATOR_IMAGE=${{ env.DOCKER_REGISTRY_URL }}/${{ env.MIGRATOR_IMAGE }}:${{ steps.meta.outputs.tag }}" >> ${{ env.DB_DIR }}/.env
-          cat ${{ env.DB_DIR }}/.env
+          echo "${{env.MIGRATOR_IMAGE}}"
           docker-compose -f ${{ env.DB_DIR }}/docker-compose-prod.yaml build
 
       - name: Push to registry
