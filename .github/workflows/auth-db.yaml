@@ -66,7 +66,7 @@ jobs:
           ssh-add key-file
 
       - name: Stop previous version
-        run: DOCKER_HOST=“ssh://${{secrets.SSH_KEY}}@${{secrets.SSH_KEY}}” docker-compose  down --rmi all
+        run: DOCKER_HOST=“ssh://${{secrets.SSH_USERNAME}}@${{secrets.SSH_HOST}}” docker-compose  down --rmi all
 
       - name: Start new version
-        run: DOCKER_HOST=“ssh://${{secrets.SSH_KEY}}@${{secrets.SSH_KEY}}” docker-compose up -d
+        run: DOCKER_HOST=“ssh://${{secrets.SSH_USERNAME}}@${{secrets.SSH_HOST}}” docker-compose up -d
