@@ -106,6 +106,10 @@ func (r *UserRepositoryPostgres) Delete(id int64) error {
 		Where(sq.Eq{idColumn: id})
 
 	query, args, err := builderDelete.ToSql()
+	if err != nil {
+
+		return fmt.Errorf("failed to build query: %v", err)
+	}
 	_, err = r.db.Exec(r.ctx, query, args...)
 	if err != nil {
 		log.Fatalf("failed to delete user with id %d: %v", id, err)
