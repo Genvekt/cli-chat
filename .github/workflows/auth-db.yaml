@@ -65,6 +65,7 @@ jobs:
           echo "${{secrets.SSH_KEY}}" >> key-file
           chmod 600 key-file
           ssh-add key-file
+          echo "StrictHostKeyChecking no" >> $(find /etc -iname ssh_config) # Avoiding host check by changing the global configuration of ssh client
 
       - name: Stop previous version
         run: DOCKER_HOST="ssh://${{secrets.SSH_USERNAME}}@${{secrets.SSH_HOST}}" docker-compose -f ${{ env.DB_DIR }}/docker-compose-prod.yaml down --rmi all
