@@ -21,8 +21,8 @@ env:
   DOCKER_REGISTRY_URL: cr.selcloud.ru/genvekt-cli-chat
 
 jobs:
-  build:
-    name: Build migrator
+  build-and-push:
+    name: Build and Push migrator
     runs-on: ubuntu-20.04
     outputs:
       docker-tag: ${{ steps.meta.outputs.tag }}
@@ -39,10 +39,10 @@ jobs:
         run: |
           echo "tag=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
 
-      - name: Build migrator
+      - name: Setup env
         run: |
-          docker-compose -f ${{ env.DB_DIR }}/docker-compose-prod.yaml build
-          docker tag ${{ env.MIGRATOR_IMAGE }}:latest ${{ env.DOCKER_REGISTRY_URL }}/${{ env.MIGRATOR_IMAGE }}:${{ steps.meta.outputs.tag }}
+          touch ${{ env.DB_DIR }}/.env
+          echo "MIGRATOR_IMAGE=${{ env.DOCKER_REGISTRY_URL }}/${{ env.MIGRATOR_IMAGE }}:${{ steps.meta.outputs.tag }}" >> ${{ env.DB_DIR }}/.env
 
       - name: Login to Registry
         uses: docker/login-action@v3
@@ -51,5 +51,23 @@ jobs:
           username: ${{secrets.DOCKER_REGISTRY_USERNAME}}
           password: ${{secrets.DOCKER_REGISTRY_PASSWORD}}
 
+      - name: Build migrator
+        run: |
+          touch ${{ env.DB_DIR }}/.env
+          echo "MIGRATOR_IMAGE=${{ env.DOCKER_REGISTRY_URL }}/${{ env.MIGRATOR_IMAGE }}:${{ steps.meta.outputs.tag }}" >> ${{ env.DB_DIR }}/.env
+          docker-compose -f ${{ env.DB_DIR }}/docker-compose-prod.yaml build
+
       - name: Push to registry
         run: docker image push ${{ env.DOCKER_REGISTRY_URL }}/${{ env.MIGRATOR_IMAGE }}:${{ steps.meta.outputs.tag }}
+
+      - name: Setup ssh key
+        run: |
+          touch key-file
+          echo "${{secrets.SSH_KEY}}" >> key-file
+          ssh-add key-file
+
+      - name: Stop previous version
+        run: DOCKER_HOST=“ssh://${{secrets.SSH_KEY}}@${{secrets.SSH_KEY}}” docker-compose  down --rmi all
+
+      - name: Start new version
+        run: DOCKER_HOST=“ssh://${{secrets.SSH_KEY}}@${{secrets.SSH_KEY}}” docker-compose up -d

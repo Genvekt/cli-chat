@@ -16,7 +16,7 @@ services:
 
   migrator:
     container_name: auth_migrator
-    image: auth_migrator
+    image: ${MIGRATOR_IMAGE}
     build:
       context: .
       dockerfile: migrator/migrator-prod.Dockerfile
