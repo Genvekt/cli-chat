@@ -4,7 +4,7 @@ volumes:
   auth_postgres_volume:
 
 services:
-  pg:
+  auth_pg:
     image: postgres:14-alpine3.17
     container_name: auth_pg
     env_file:
@@ -16,7 +16,7 @@ services:
     networks:
       - auth
 
-  migrator:
+  auth_migrator:
     container_name: auth_migrator
     image: ${MIGRATOR_IMAGE}
     build:

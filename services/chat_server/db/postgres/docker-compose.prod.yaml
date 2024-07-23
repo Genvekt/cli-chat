@@ -14,7 +14,7 @@ services:
     volumes:
       - chat-server_postgres_volume:/var/lib/postgresql/data
     networks:
-      - chat-server
+      - chat_server
 
   chat-server_migrator:
     container_name: chat-server_migrator
@@ -26,8 +26,8 @@ services:
       - prod.env
     restart: on-failure
     networks:
-      - chat-server
+      - chat_server
 
 networks:
-  chat-server:
+  chat_server:
     external: true
