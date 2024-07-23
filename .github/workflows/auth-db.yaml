@@ -67,7 +67,7 @@ jobs:
           ssh-add key-file
 
       - name: Stop previous version
-        run: DOCKER_HOST="ssh://${{secrets.SSH_USERNAME}}@${{secrets.SSH_HOST}}:2375" docker-compose -f ${{ env.DB_DIR }}/docker-compose-prod.yaml down --rmi all
+        run: DOCKER_HOST="ssh://${{secrets.SSH_USERNAME}}@${{secrets.SSH_HOST}}" docker-compose -f ${{ env.DB_DIR }}/docker-compose-prod.yaml down --rmi all
 
       - name: Start new version
-        run: DOCKER_HOST="ssh://${{secrets.SSH_USERNAME}}@${{secrets.SSH_HOST}}:2375" docker-compose -f ${{ env.DB_DIR }}/docker-compose-prod.yaml up -d
+        run: DOCKER_HOST="ssh://${{secrets.SSH_USERNAME}}@${{secrets.SSH_HOST}}" docker-compose -f ${{ env.DB_DIR }}/docker-compose-prod.yaml up -d
