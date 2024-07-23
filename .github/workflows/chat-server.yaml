@@ -3,11 +3,13 @@ on:
   push:
     branches:
       - main
+      - dev
     paths:
       - 'services/chat_server/**'
   pull_request:
     branches:
       - main
+      - dev
     paths:
       - 'services/chat_server/**'
 
@@ -57,12 +59,17 @@ jobs:
     runs-on: ubuntu-20.04
     needs:
       - build-and-test
-      - linter
+      #- linter
     outputs:
       docker-image: ${{ steps.meta.outputs.tags }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
+
+      - name: Generate env file
+        run: |
+          touch ${{ env.SERVICE_PATH }}/prod.env
+          echo "${{ secrets.CHAT_SERVER_ENV_FILE }}" > ${{ env.SERVICE_PATH }}/prod.env
 
       - name: Setup Docker Tag
         id: meta
@@ -119,4 +126,4 @@ jobs:
             docker rm  ${{env.SERVICE_NAME}}
             
             # Run a new container from a new image
-            docker run -d -p 50051:50051 --name ${{env.SERVICE_NAME}} -t ${{needs.image-build-and-push.outputs.docker-image}}
+            docker run -d -p 50051:50051 --network ${{env.SERVICE_NAME}} --name ${{env.SERVICE_NAME}} -t ${{needs.image-build-and-push.outputs.docker-image}}

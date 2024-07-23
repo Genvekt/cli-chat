@@ -3,19 +3,21 @@ on:
   push:
     branches:
       - main
+      - dev
     paths:
-      - 'services/auth/**'
-      - 'services/auth/db/postgres/migrations/**'
+      - 'services/chat_server/**'
+      - 'services/chat_server/db/postgres/migrations/**'
   pull_request:
     branches:
       - main
+      - dev
     paths:
-      - 'services/auth/**'
-      - 'services/auth/db/postgres/migrations/**'
+      - 'services/chat_server/**'
+      - 'services/chat_server/db/postgres/migrations/**'
 
 env:
-  DB_DIR: services/auth/db/postgres
-  MIGRATOR_IMAGE_NAME: auth_migrator
+  DB_DIR: services/chat_server/db/postgres
+  MIGRATOR_IMAGE_NAME: chat-server_migrator
   DOCKER_REGISTRY_URL: cr.selcloud.ru/genvekt-cli-chat
 
 jobs:
@@ -30,7 +32,7 @@ jobs:
       - name: Create prod.env file
         run: |
           touch ${{ env.DB_DIR }}/prod.env
-          echo "${{ secrets.AUTH_POSTGRES_ENV_FILE }}" > ${{ env.DB_DIR }}/prod.env
+          echo "${{ secrets.CHAT_SERVER_POSTGRES_ENV_FILE }}" > ${{ env.DB_DIR }}/prod.env
 
       - name: Setup Docker Tag
         id: meta

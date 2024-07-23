@@ -11,6 +11,7 @@ RUN go build -o ./bin/main ./cmd/main.go
 FROM alpine:latest
 
 WORKDIR /root/
-COPY --from=builder /app/services/chat_server/bin/main .
+COPY --from=builder /app/services/chat_server/bin/main ./main
+COPY --from=builder /app/services/chat_server/bin/local.env ./.env
 
 CMD ["./main"]
