@@ -3,6 +3,7 @@ on:
   push:
     branches:
       - main
+    paths:
       - 'services/auth/db/postgres/**'
   pull_request:
     branches:
@@ -20,7 +21,7 @@ jobs:
     name: Build and Push migrator
     runs-on: ubuntu-20.04
     outputs:
-      docker-tag: ${{ steps.meta.outputs.tag }}
+      tag: ${{ steps.meta.outputs.tag }}
     steps:
       - uses: actions/checkout@v3
 
@@ -50,10 +51,12 @@ jobs:
           docker-compose -f ${{ env.DB_DIR }}/docker-compose.prod.yaml build
 
       - name: Push migrator to registry
+        if: ${{ github.event_name != 'pull_request'}}
         run: docker image push ${{ env.MIGRATOR_IMAGE }}
 
   deploy:
     name: Deploy DB and Migrate on Selectel Cloud
+    if: ${{ github.event_name != 'pull_request'}}
     runs-on: ubuntu-20.04
     needs:
       - build-and-push

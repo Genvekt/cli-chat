@@ -93,7 +93,7 @@ jobs:
       - name: Build and push
         uses: docker/build-push-action@v6
         with:
-          push: true # github.event_name != 'pull_request'
+          push: ${{ github.event_name != 'pull_request'}}
           tags: ${{ steps.meta.outputs.tags }}
           file: ${{ env.SERVICE_PATH }}/prod.Dockerfile
           context: .
@@ -103,7 +103,7 @@ jobs:
   deploy:
     name: Deploy service
     runs-on: ubuntu-20.04
-    # if: github.event_name != 'pull_request'
+    if: ${{ github.event_name != 'pull_request'}}
     needs:
       - image-build-and-push
     steps:

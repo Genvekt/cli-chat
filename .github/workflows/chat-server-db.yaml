@@ -4,14 +4,12 @@ on:
     branches:
       - main
     paths:
-      - 'services/chat_server/**'
-      - 'services/chat_server/db/postgres/migrations/**'
+      - 'services/chat_server/db/postgres/**'
   pull_request:
     branches:
       - main
     paths:
-      - 'services/chat_server/**'
-      - 'services/chat_server/db/postgres/migrations/**'
+      - 'services/chat_server/db/postgres/**'
 
 env:
   DB_DIR: services/chat_server/db/postgres
@@ -53,10 +51,12 @@ jobs:
           docker-compose -f ${{ env.DB_DIR }}/docker-compose.prod.yaml build
 
       - name: Push migrator to registry
+        if: ${{ github.event_name != 'pull_request'}}
         run: docker image push ${{ env.MIGRATOR_IMAGE }}
 
   deploy:
     name: Deploy DB and Migrate on Selectel Cloud
+    if: ${{ github.event_name != 'pull_request'}}
     runs-on: ubuntu-20.04
     needs:
       - build-and-push
