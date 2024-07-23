@@ -3,13 +3,11 @@ on:
   push:
     branches:
       - main
-      - dev
     paths:
       - 'services/auth/**'
   pull_request:
     branches:
       - main
-      - dev
     paths:
       - 'services/auth/**'
 
@@ -20,6 +18,7 @@ env:
 
 jobs:
   build-and-test:
+    name: Build and Test service
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v3
@@ -37,7 +36,7 @@ jobs:
         run: go test -C $SERVICE_PATH/cmd/ ../...
 
   linter:
-    name: lint
+    name: Lint service
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v3
@@ -58,7 +57,7 @@ jobs:
     runs-on: ubuntu-20.04
     needs:
       - build-and-test
-      #- linter
+      - linter
     outputs:
       docker-image: ${{ steps.meta.outputs.tags }}
     steps:
