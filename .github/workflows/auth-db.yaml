@@ -15,6 +15,9 @@ on:
       - 'services/auth/**'
       - 'services/auth/db/postgres/migrations/**'
 
+env:
+  DB_DIR: services/auth/db/postgres
+
 jobs:
   build:
     name: Build migrator
@@ -22,6 +25,8 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Create .env file
-        run: echo "${{ secrets.AUTH_POSTGRES_ENV_FILE }}" > services/auth/db/postgres/prod.env
+        run: |
+          touch ${{ env.DB_DIR }}/prod.env
+          echo "${{ secrets.AUTH_POSTGRES_ENV_FILE }}" > ${{ env.DB_DIR }}/prod.env
       - name: Log .env file
-        run: cat services/auth/db/postgres/prod.env
+        run: cat ${{ env.DB_DIR }}/prod.env
