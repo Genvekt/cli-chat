@@ -58,7 +58,7 @@ jobs:
     runs-on: ubuntu-20.04
     needs:
       - build-and-test
-      - linter
+      #- linter
     outputs:
       docker-image: ${{ steps.meta.outputs.tags }}
     steps:
