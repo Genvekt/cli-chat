@@ -25,7 +25,7 @@ import (
 var configPath string
 
 func init() {
-	flag.StringVar(&configPath, "config-path", "", "path to .env config file")
+	flag.StringVar(&configPath, "config-path", ".env", "path to .env config file")
 }
 
 type server struct {

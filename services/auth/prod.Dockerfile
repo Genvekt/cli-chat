@@ -11,7 +11,7 @@ RUN go build -o ./bin/main ./cmd/main.go
 FROM alpine:latest
 
 WORKDIR /root/
-COPY --from=builder /app/services/auth/bin/main .
-COPY --from=builder /app/services/auth/prod.env .
+COPY --from=builder /app/services/auth/bin/main ./main
+COPY --from=builder /app/services/auth/prod.env ./.env
 
-CMD ["./main --config-path ./prod.env"]
+CMD ["./main"]

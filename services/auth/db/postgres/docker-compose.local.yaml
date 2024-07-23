@@ -13,6 +13,8 @@ services:
       - "54321:5432"
     volumes:
       - auth_postgres_volume:/var/lib/postgresql/data
+    networks:
+      - auth
 
   migrator:
     container_name: auth_migrator
@@ -23,3 +25,9 @@ services:
     env_file:
       - local.env
     restart: on-failure
+    networks:
+      - auth
+
+networks:
+  auth:
+    external: true
