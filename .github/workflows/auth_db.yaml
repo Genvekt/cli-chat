@@ -5,15 +5,15 @@ on:
       - main
       - dev
     paths:
-      - 'services/auth'
-      - 'services/auth/db/postgres/migrations'
+      - 'services/auth/**'
+      - 'services/auth/db/postgres/migrations/**'
   pull_request:
     branches:
       - main
       - dev
     paths:
-      - 'services/auth'
-      - 'services/auth/db/postgres/migrations'
+      - 'services/auth/**'
+      - 'services/auth/db/postgres/migrations/**'
 
 jobs:
   build:
