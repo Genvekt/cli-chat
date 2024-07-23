@@ -60,6 +60,7 @@ jobs:
 
       - name: Setup ssh key
         run: |
+          eval `ssh-agent -s`
           touch key-file
           echo "${{secrets.SSH_KEY}}" >> key-file
           ssh-add key-file
