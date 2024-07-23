@@ -17,7 +17,7 @@ on:
 
 env:
   DB_DIR: services/auth/db/postgres
-  MIGRATOR_IMAGE: auth_migrator
+  MIGRATOR_IMAGE_NAME: auth_migrator
   DOCKER_REGISTRY_URL: cr.selcloud.ru/genvekt-cli-chat
 
 jobs:
@@ -41,7 +41,7 @@ jobs:
 
       - name: Setup Image names
         run: |
-          echo "MIGRATOR_IMAGE=${{ env.DOCKER_REGISTRY_URL }}/${{ env.MIGRATOR_IMAGE }}:${{ steps.meta.outputs.tag }}" >> "$GITHUB_ENV"
+          echo "MIGRATOR_IMAGE=${{ env.DOCKER_REGISTRY_URL }}/${{ env.MIGRATOR_IMAGE_NAME }}:${{ steps.meta.outputs.tag }}" >> "$GITHUB_ENV"
 
       - name: Login to Registry
         uses: docker/login-action@v3
@@ -56,7 +56,7 @@ jobs:
           docker-compose -f ${{ env.DB_DIR }}/docker-compose-prod.yaml build
 
       - name: Push to registry
-        run: docker image push ${{ env.DOCKER_REGISTRY_URL }}/${{ env.MIGRATOR_IMAGE }}:${{ steps.meta.outputs.tag }}
+        run: docker image push ${{ env.MIGRATOR_IMAGE }}
 
       - name: Setup ssh key
         run: |
