@@ -12,6 +12,6 @@ FROM alpine:latest
 
 WORKDIR /root/
 COPY --from=builder /app/services/chat_server/bin/main ./main
-COPY --from=builder /app/services/chat_server/bin/prod.env ./.env
+COPY --from=builder /app/services/chat_server/prod.env ./.env
 
 CMD ["./main"]
