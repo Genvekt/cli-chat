@@ -1,0 +1,25 @@
+version: '3'
+
+volumes:
+  auth_postgres_volume:
+
+services:
+  pg:
+    image: postgres:14-alpine3.17
+    container_name: auth_pg
+    env_file:
+      - prod.env
+    ports:
+      - "54321:5432"
+    volumes:
+      - auth_postgres_volume:/var/lib/postgresql/data
+
+  migrator:
+    container_name: auth_migrator
+    image: auth_migrator
+    build:
+      context: .
+      dockerfile: migrator/migrator-prod.Dockerfile
+    env_file:
+      - prod.env
+    restart: on-failure
