@@ -13,9 +13,12 @@ on:
 
 env:
   SERVICE_PATH: ./services/chat_server
+  SERVICE_NAME: chat_server
+  DOCKER_REGISTRY_URL: cr.selcloud.ru/genvekt-cli-chat
 
 jobs:
   build-and-test:
+    name: Build and Test service
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v3
@@ -33,7 +36,7 @@ jobs:
         run: go test -C $SERVICE_PATH/cmd/ ../...
 
   linter:
-    name: lint
+    name: Lint service
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v3
@@ -44,31 +47,81 @@ jobs:
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v3
         with:
-          # Require: The version of golangci-lint to use.
-          # When `install-mode` is `binary` (default) the value can be v1.2 or v1.2.3 or `latest` to use the latest version.
-          # When `install-mode` is `goinstall` the value can be v1.2.3, `latest`, or the hash of a commit.
           version: v1.59
-
           working-directory: ${{ env.SERVICE_PATH }}
-
-          # Optional: golangci-lint command line arguments.
-          #
-          # Note: By default, the `.golangci.yml` file should be at the root of the repository.
-          # The location of the configuration file can be changed by using `--config=`
           args: --timeout=30m --config=../../.golangci.pipeline.yaml
-
-          # Optional: show only new issues if it's a pull request. The default value is `false`.
-          # only-new-issues: true
-
-          # Optional: if set to true, then all caching functionality will be completely disabled,
-          #           takes precedence over all other caching options.
           skip-cache: true
 
-          # Optional: if set to true, then the action won't cache or restore ~/go/pkg.
-          # skip-pkg-cache: true
+  image-build-and-push:
+    name: Build and Push Image
+    runs-on: ubuntu-20.04
+    needs:
+      - build-and-test
+      - linter
+    outputs:
+      docker-image: ${{ steps.meta.outputs.tags }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-          # Optional: if set to true, then the action won't cache or restore ~/.cache/go-build.
-          # skip-build-cache: true
+      - name: Generate env file
+        run: |
+          touch ${{ env.SERVICE_PATH }}/prod.env
+          echo "${{ secrets.CHAT_SERVER_ENV_FILE }}" > ${{ env.SERVICE_PATH }}/prod.env
 
-          # Optional: The mode to install golangci-lint. It can be 'binary' or 'goinstall'.
-          # install-mode: "goinstall"
+      - name: Setup Docker Tag
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          # list of Docker images to use as base name for tags
+          images: |
+            ${{env.DOCKER_REGISTRY_URL}}/${{env.SERVICE_NAME}}
+          # generate Docker tags based on the following events/attributes
+          tags: |
+            type=sha,prefix=,suffix=,format=short
+
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{env.DOCKER_REGISTRY_URL}}
+          username: ${{secrets.DOCKER_REGISTRY_USERNAME}}
+          password: ${{secrets.DOCKER_REGISTRY_PASSWORD}}
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          file: ${{ env.SERVICE_PATH }}/prod.Dockerfile
+          context: .
+          no-cache: true
+          provenance: false  # With this setting tags appear in registry!
+
+  deploy:
+    name: Deploy service
+    runs-on: ubuntu-20.04
+    if: ${{ github.event_name != 'pull_request'}}
+    needs:
+      - image-build-and-push
+    steps:
+      - name: Deploy to Selectel Cloud
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USERNAME }}
+          key: ${{ secrets.SSH_KEY }}
+          script: |
+            # Login into Selectel Registry
+            docker login -u ${{secrets.DOCKER_REGISTRY_USERNAME}} -p ${{secrets.DOCKER_REGISTRY_PASSWORD}} ${{env.DOCKER_REGISTRY_URL}}
+            
+            # Stop running container
+            docker stop ${{env.SERVICE_NAME}}
+            
+            # Remove old container
+            docker rm  ${{env.SERVICE_NAME}}
+            
+            # Run a new container from a new image
+            docker run -d -p 50051:50051 --network ${{env.SERVICE_NAME}} --name ${{env.SERVICE_NAME}} -t ${{needs.image-build-and-push.outputs.docker-image}}
