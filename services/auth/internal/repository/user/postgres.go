@@ -1,4 +1,4 @@
-package postgres
+package user
 
 import (
 	"context"
@@ -8,15 +8,16 @@ import (
 
 	sq "github.com/Masterminds/squirrel"
 	"github.com/jackc/pgx/v4"
-	"github.com/jackc/pgx/v4/pgxpool"
 
-	"github.com/Genvekt/cli-chat/services/auth/model"
-	"github.com/Genvekt/cli-chat/services/auth/repository"
+	"github.com/Genvekt/cli-chat/services/auth/internal/client/db"
+	"github.com/Genvekt/cli-chat/services/auth/internal/model"
+	"github.com/Genvekt/cli-chat/services/auth/internal/repository"
+	repoConverter "github.com/Genvekt/cli-chat/services/auth/internal/repository/user/converter"
+	repoModel "github.com/Genvekt/cli-chat/services/auth/internal/repository/user/model"
 )
 
 const (
-	// user is reserved word in postgres, needs double quotes in query
-	userTable       = "\"user\""
+	userTable       = "\"user\"" // user is a reserved word in postgres, needs double quotes in query
 	idColumn        = "id"
 	nameColumn      = "name"
 	emailColumn     = "email"
@@ -25,22 +26,22 @@ const (
 	updatedAtColumn = "updated_at"
 )
 
-var _ repository.UserRepository = (*UserRepositoryPostgres)(nil)
+var _ repository.UserRepository = (*userRepositoryPostgres)(nil)
 
-// UserRepositoryPostgres implements repository.UserRepository for Postgres data source
-type UserRepositoryPostgres struct {
-	db *pgxpool.Pool
+// userRepositoryPostgres implements repository.UserRepository for Postgres data source
+type userRepositoryPostgres struct {
+	db db.Client
 }
 
 // NewUserRepositoryPostgres creates UserRepositoryPostgres instance
-func NewUserRepositoryPostgres(db *pgxpool.Pool) *UserRepositoryPostgres {
-	return &UserRepositoryPostgres{
+func NewUserRepositoryPostgres(db db.Client) *userRepositoryPostgres {
+	return &userRepositoryPostgres{
 		db: db,
 	}
 }
 
 // Create adds new user to db and updates id in user on success
-func (r *UserRepositoryPostgres) Create(ctx context.Context, user *model.User) error {
+func (r *userRepositoryPostgres) Create(ctx context.Context, user *model.User) (int64, error) {
 	// Create and update times are set to now() as default in database
 	builderInsert := sq.Insert(userTable).
 		PlaceholderFormat(sq.Dollar).
@@ -50,19 +51,25 @@ func (r *UserRepositoryPostgres) Create(ctx context.Context, user *model.User) e
 
 	query, args, err := builderInsert.ToSql()
 	if err != nil {
-		return fmt.Errorf("failed to build query: %v", err)
+		return 0, fmt.Errorf("failed to build query: %v", err)
 	}
 
-	err = r.db.QueryRow(ctx, query, args...).Scan(&user.ID)
+	q := db.Query{
+		Name:     "user_repository.Create",
+		QueryRaw: query,
+	}
+
+	var newUserID int64
+	err = r.db.DB().QueryRowContext(ctx, q, args...).Scan(&newUserID)
 	if err != nil {
-		return fmt.Errorf("failed to insert user: %v", err)
+		return 0, fmt.Errorf("failed to insert user: %v", err)
 	}
 
-	return nil
+	return newUserID, nil
 }
 
 // Get retrieves user by id
-func (r *UserRepositoryPostgres) Get(ctx context.Context, id int64) (*model.User, error) {
+func (r *userRepositoryPostgres) Get(ctx context.Context, id int64) (*model.User, error) {
 	builderSelectOne := sq.Select(idColumn, nameColumn, emailColumn, roleColumn, createdAtColumn, updatedAtColumn).
 		From(userTable).
 		PlaceholderFormat(sq.Dollar).
@@ -75,23 +82,26 @@ func (r *UserRepositoryPostgres) Get(ctx context.Context, id int64) (*model.User
 		return nil, fmt.Errorf("failed to build query: %v", err)
 	}
 
-	user := &model.User{}
+	dbUser := &repoModel.User{}
 
-	err = r.db.QueryRow(ctx, query, args...).Scan(
-		&user.ID, &user.Name, &user.Email, &user.Role, &user.CreatedAt, &user.UpdatedAt,
-	)
+	q := db.Query{
+		Name:     "user_repository.Get",
+		QueryRaw: query,
+	}
+
+	err = r.db.DB().ScanOneContext(ctx, dbUser, q, args...)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, fmt.Errorf("user with id %d not found", id)
+			return nil, repository.ErrUserNotFound
 		}
 		return nil, fmt.Errorf("failed to get user by id %d: %v", id, err)
 	}
 
-	return user, nil
+	return repoConverter.ToUserFromRepo(dbUser), nil
 }
 
 // Update updates user in db
-func (r *UserRepositoryPostgres) Update(
+func (r *userRepositoryPostgres) Update(
 	ctx context.Context,
 	id int64,
 	updateFunc func(user *model.User) error,
@@ -139,7 +149,12 @@ func (r *UserRepositoryPostgres) Update(
 		return nil
 	}
 
-	_, err = r.db.Exec(ctx, query, args...)
+	q := db.Query{
+		Name:     "user_repository.Update",
+		QueryRaw: query,
+	}
+
+	_, err = r.db.DB().ExecContext(ctx, q, args...)
 	if err != nil {
 		return fmt.Errorf("failed to update user with id %d: %v", id, err)
 	}
@@ -148,7 +163,7 @@ func (r *UserRepositoryPostgres) Update(
 }
 
 // Delete removes user by id
-func (r *UserRepositoryPostgres) Delete(ctx context.Context, id int64) error {
+func (r *userRepositoryPostgres) Delete(ctx context.Context, id int64) error {
 	builderDelete := sq.Delete(userTable).PlaceholderFormat(sq.Dollar).
 		Where(sq.Eq{idColumn: id})
 
@@ -158,10 +173,52 @@ func (r *UserRepositoryPostgres) Delete(ctx context.Context, id int64) error {
 		return fmt.Errorf("failed to build query: %v", err)
 	}
 
-	_, err = r.db.Exec(ctx, query, args...)
+	q := db.Query{
+		Name:     "user_repository.Delete",
+		QueryRaw: query,
+	}
+
+	_, err = r.db.DB().ExecContext(ctx, q, args...)
 	if err != nil {
 		return fmt.Errorf("failed to delete user with id %d: %v", id, err)
 	}
 
 	return nil
+}
+
+// Query retrieves users by their names
+func (r *userRepositoryPostgres) Query(ctx context.Context, names []string) ([]*model.User, error) {
+	var queryCondition sq.Or
+	for _, name := range names {
+		queryCondition = append(queryCondition, sq.Eq{nameColumn: name})
+	}
+
+	builderQuery := sq.Select(idColumn, nameColumn, emailColumn, roleColumn, createdAtColumn, updatedAtColumn).
+		PlaceholderFormat(sq.Dollar).
+		From(userTable).
+		Where(queryCondition)
+
+	query, args, err := builderQuery.ToSql()
+	if err != nil {
+
+		return nil, fmt.Errorf("failed to build query: %v", err)
+	}
+
+	q := db.Query{
+		Name:     "user_repository.Query",
+		QueryRaw: query,
+	}
+
+	var usersDB []*repoModel.User
+	err = r.db.DB().ScanAllContext(ctx, &usersDB, q, args...)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query users: %v", err)
+	}
+
+	users := make([]*model.User, 0, len(usersDB))
+	for _, user := range usersDB {
+		users = append(users, repoConverter.ToUserFromRepo(user))
+	}
+
+	return users, nil
 }
