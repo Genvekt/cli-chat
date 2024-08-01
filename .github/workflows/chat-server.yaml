@@ -6,8 +6,6 @@ on:
     paths:
       - 'services/chat_server/**'
   pull_request:
-    branches:
-      - main
     paths:
       - 'services/chat_server/**'
 
