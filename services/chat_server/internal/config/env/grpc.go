@@ -5,7 +5,7 @@ import (
 	"net"
 	"os"
 
-	config "github.com/Genvekt/cli-chat/services/chat-server/internal"
+	"github.com/Genvekt/cli-chat/services/chat-server/internal/config"
 )
 
 var _ config.GRPCConfig = (*gRPCConfigEnv)(nil)
@@ -13,11 +13,29 @@ var _ config.GRPCConfig = (*gRPCConfigEnv)(nil)
 const (
 	grpcHostEnv = "GRPC_HOST"
 	grpcPortEnv = "GRPC_PORT"
+
+	authGrpcHostEnv = "AUTH_GRPC_HOST"
+	authGrpcPortEnv = "AUTH_GRPC_PORT"
 )
 
 type gRPCConfigEnv struct {
 	host string
 	port string
+}
+
+// NewAuthCliGRPCConfigEnv retrieves grpc config for auth service connection
+func NewAuthCliGRPCConfigEnv() (*gRPCConfigEnv, error) {
+	host := os.Getenv(grpcHostEnv)
+	if host == "" {
+		return nil, fmt.Errorf("environment variable %q not set", authGrpcHostEnv)
+	}
+
+	port := os.Getenv(grpcPortEnv)
+	if port == "" {
+		return nil, fmt.Errorf("environment variable %q not set", authGrpcPortEnv)
+	}
+
+	return &gRPCConfigEnv{host: host, port: port}, nil
 }
 
 // NewGRPCConfigEnv retrieves new gRPCConfigEnv instance
