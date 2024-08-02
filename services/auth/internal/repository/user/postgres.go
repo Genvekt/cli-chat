@@ -62,7 +62,7 @@ func (r *userRepositoryPostgres) Create(ctx context.Context, user *model.User) (
 	var newUserID int64
 	err = r.db.DB().QueryRowContext(ctx, q, args...).Scan(&newUserID)
 	if err != nil {
-		return 0, fmt.Errorf("failed to insert user: %v", err)
+		return 0, err
 	}
 
 	return newUserID, nil
@@ -94,7 +94,7 @@ func (r *userRepositoryPostgres) Get(ctx context.Context, id int64) (*model.User
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, repository.ErrUserNotFound
 		}
-		return nil, fmt.Errorf("failed to get user by id %d: %v", id, err)
+		return nil, err
 	}
 
 	return repoConverter.ToUserFromRepo(dbUser), nil
@@ -108,7 +108,7 @@ func (r *userRepositoryPostgres) Update(
 ) error {
 	oldUser, err := r.Get(ctx, id)
 	if err != nil {
-		return fmt.Errorf("cannot update user with id %d: %v", id, err)
+		return err
 	}
 
 	// Leave old user untouched to detect updates
@@ -116,7 +116,7 @@ func (r *userRepositoryPostgres) Update(
 
 	err = updateFunc(&updatedUser)
 	if err != nil {
-		return fmt.Errorf("cannot update user with id %d: %v", id, err)
+		return err
 	}
 
 	if updatedUser.ID != id {
@@ -156,7 +156,7 @@ func (r *userRepositoryPostgres) Update(
 
 	_, err = r.db.DB().ExecContext(ctx, q, args...)
 	if err != nil {
-		return fmt.Errorf("failed to update user with id %d: %v", id, err)
+		return err
 	}
 
 	return nil
@@ -180,23 +180,18 @@ func (r *userRepositoryPostgres) Delete(ctx context.Context, id int64) error {
 
 	_, err = r.db.DB().ExecContext(ctx, q, args...)
 	if err != nil {
-		return fmt.Errorf("failed to delete user with id %d: %v", id, err)
+		return err
 	}
 
 	return nil
 }
 
-// Query retrieves users by their names
-func (r *userRepositoryPostgres) Query(ctx context.Context, names []string) ([]*model.User, error) {
-	var queryCondition sq.Or
-	for _, name := range names {
-		queryCondition = append(queryCondition, sq.Eq{nameColumn: name})
-	}
-
+// GetList retrieves users by their names
+func (r *userRepositoryPostgres) GetList(ctx context.Context, names []string) ([]*model.User, error) {
 	builderQuery := sq.Select(idColumn, nameColumn, emailColumn, roleColumn, createdAtColumn, updatedAtColumn).
 		PlaceholderFormat(sq.Dollar).
 		From(userTable).
-		Where(queryCondition)
+		Where(sq.Eq{nameColumn: names})
 
 	query, args, err := builderQuery.ToSql()
 	if err != nil {
@@ -212,13 +207,8 @@ func (r *userRepositoryPostgres) Query(ctx context.Context, names []string) ([]*
 	var usersDB []*repoModel.User
 	err = r.db.DB().ScanAllContext(ctx, &usersDB, q, args...)
 	if err != nil {
-		return nil, fmt.Errorf("failed to query users: %v", err)
+		return nil, err
 	}
 
-	users := make([]*model.User, 0, len(usersDB))
-	for _, user := range usersDB {
-		users = append(users, repoConverter.ToUserFromRepo(user))
-	}
-
-	return users, nil
+	return repoConverter.ToUsersFromRepo(usersDB), nil
 }

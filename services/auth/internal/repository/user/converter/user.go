@@ -16,3 +16,12 @@ func ToUserFromRepo(user *repoModel.User) *model.User {
 		UpdatedAt: user.UpdatedAt,
 	}
 }
+
+// ToUsersFromRepo converts slice of user repository model to slice of user service model
+func ToUsersFromRepo(users []*repoModel.User) []*model.User {
+	serviceUsers := make([]*model.User, 0, len(users))
+	for _, user := range users {
+		serviceUsers = append(serviceUsers, ToUserFromRepo(user))
+	}
+	return serviceUsers
+}

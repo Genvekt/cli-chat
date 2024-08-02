@@ -16,6 +16,17 @@ func ToUserFromProtoInfo(user *userApi.UserInfo) *model.User {
 	}
 }
 
+// ToProtoUsersFromUsers converts slice of user service model to slice of user api model
+func ToProtoUsersFromUsers(users []*model.User) []*userApi.User {
+	protoUsers := make([]*userApi.User, 0, len(users))
+
+	for _, user := range users {
+		protoUsers = append(protoUsers, ToProtoUserFromUser(user))
+	}
+
+	return protoUsers
+}
+
 // ToProtoUserFromUser converts user service model to user api model
 func ToProtoUserFromUser(user *model.User) *userApi.User {
 	return &userApi.User{
