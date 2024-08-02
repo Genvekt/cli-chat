@@ -14,7 +14,12 @@ var ErrChatMemberNotFound = errors.New("chat member not found")
 type ChatRepository interface {
 	Create(ctx context.Context, chat *model.Chat) (int64, error)
 	Delete(ctx context.Context, id int64) error
-	GetChatMember(ctx context.Context, chatID int64, userID int64) (*model.ChatMember, error)
+}
+
+// ChatMemberRepository manages chat members in some data source
+type ChatMemberRepository interface {
+	CreateBatch(ctx context.Context, chatID int64, userIDs []int64) error
+	Get(ctx context.Context, chatID int64, userID int64) (*model.ChatMember, error)
 }
 
 // MessageRepository manages messages in some data source

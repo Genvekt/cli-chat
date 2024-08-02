@@ -10,23 +10,26 @@ import (
 var _ service.ChatService = (*chatService)(nil)
 
 type chatService struct {
-	chatRepo    repository.ChatRepository
-	messageRepo repository.MessageRepository
-	userCli     serviceCli.AuthClient
-	txManager   db.TxManager
+	chatRepo       repository.ChatRepository
+	chatMemberRepo repository.ChatMemberRepository
+	messageRepo    repository.MessageRepository
+	userCli        serviceCli.AuthClient
+	txManager      db.TxManager
 }
 
 // NewChatService initialises service layer for chat business logic
 func NewChatService(
 	chatRepo repository.ChatRepository,
+	chatMemberRepo repository.ChatMemberRepository,
 	messageRepository repository.MessageRepository,
 	userCli serviceCli.AuthClient,
 	txManager db.TxManager,
 ) *chatService {
 	return &chatService{
-		chatRepo:    chatRepo,
-		messageRepo: messageRepository,
-		userCli:     userCli,
-		txManager:   txManager,
+		chatRepo:       chatRepo,
+		chatMemberRepo: chatMemberRepo,
+		messageRepo:    messageRepository,
+		userCli:        userCli,
+		txManager:      txManager,
 	}
 }

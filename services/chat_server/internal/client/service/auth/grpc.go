@@ -24,13 +24,19 @@ func NewAuthGrpcClient(conn *grpc.ClientConn) *authGrpcClient {
 	}
 }
 
-// Query performs QueryRequest
-func (c *authGrpcClient) Query(
+// GetList performs GetListRequest
+func (c *authGrpcClient) GetList(
 	ctx context.Context,
-	req *userApi.QueryRequest,
-) (*userApi.QueryResponse, error) {
+	req *userApi.GetListRequest,
+) (*userApi.GetListResponse, error) {
 	LogRequest(ctx, req)
-	return c.client.Query(ctx, req)
+
+	resp, err := c.client.GetList(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	return resp, nil
 }
 
 // LogRequest logs request sent to grpc client

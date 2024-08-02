@@ -2,7 +2,7 @@ package converter
 
 import (
 	"github.com/Genvekt/cli-chat/services/chat-server/internal/model"
-	repoModel "github.com/Genvekt/cli-chat/services/chat-server/internal/repository/chat/model"
+	repoModel "github.com/Genvekt/cli-chat/services/chat-server/internal/repository/chat_member/model"
 )
 
 // ToChatMemberFromRepo repository model chat member to service model chat member

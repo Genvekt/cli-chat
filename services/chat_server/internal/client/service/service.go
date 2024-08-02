@@ -9,11 +9,10 @@ import (
 
 // AuthClient abstraction of connection to auth service
 type AuthClient interface {
-	Query(ctx context.Context, userbames []string) ([]*model.User, error)
-	Close() error
+	GetList(ctx context.Context, usernames []string) ([]*model.User, error)
 }
 
 // UserGrpcClient wrapper around grpc client to auth service
 type UserGrpcClient interface {
-	Query(ctx context.Context, req *userApi.QueryRequest) (*userApi.QueryResponse, error)
+	GetList(ctx context.Context, req *userApi.GetListRequest) (*userApi.GetListResponse, error)
 }

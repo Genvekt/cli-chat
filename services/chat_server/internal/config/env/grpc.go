@@ -25,12 +25,12 @@ type gRPCConfigEnv struct {
 
 // NewAuthCliGRPCConfigEnv retrieves grpc config for auth service connection
 func NewAuthCliGRPCConfigEnv() (*gRPCConfigEnv, error) {
-	host := os.Getenv(grpcHostEnv)
+	host := os.Getenv(authGrpcHostEnv)
 	if host == "" {
 		return nil, fmt.Errorf("environment variable %q not set", authGrpcHostEnv)
 	}
 
-	port := os.Getenv(grpcPortEnv)
+	port := os.Getenv(authGrpcPortEnv)
 	if port == "" {
 		return nil, fmt.Errorf("environment variable %q not set", authGrpcPortEnv)
 	}

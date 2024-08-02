@@ -11,9 +11,7 @@ import (
 
 // SendMessage handles SendMessageRequest
 func (s *Service) SendMessage(ctx context.Context, req *chatApi.SendMessageRequest) (*emptypb.Empty, error) {
-	message := converter.ToMessageFromProto(req.Message)
-
-	err := s.chatService.SendMessage(ctx, message)
+	err := s.chatService.SendMessage(ctx, converter.ToMessageFromProto(req.Message))
 	if err != nil {
 		return nil, err
 	}

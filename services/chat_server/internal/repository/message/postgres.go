@@ -54,7 +54,7 @@ func (r *messagePostgresRepository) Create(ctx context.Context, message *model.M
 
 	_, err = r.db.DB().ExecContext(ctx, q, args...)
 	if err != nil {
-		return fmt.Errorf("failed to insert message: %v", err)
+		return err
 	}
 
 	return nil

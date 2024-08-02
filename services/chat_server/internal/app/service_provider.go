@@ -4,6 +4,9 @@ import (
 	"context"
 	"log"
 
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
+
 	chatImpl "github.com/Genvekt/cli-chat/services/chat-server/internal/api/chat"
 	"github.com/Genvekt/cli-chat/services/chat-server/internal/client/db"
 	"github.com/Genvekt/cli-chat/services/chat-server/internal/client/db/pg"
@@ -15,6 +18,7 @@ import (
 	"github.com/Genvekt/cli-chat/services/chat-server/internal/config/env"
 	"github.com/Genvekt/cli-chat/services/chat-server/internal/repository"
 	chatRepository "github.com/Genvekt/cli-chat/services/chat-server/internal/repository/chat"
+	chatMemberRepository "github.com/Genvekt/cli-chat/services/chat-server/internal/repository/chat_member"
 	messageRepository "github.com/Genvekt/cli-chat/services/chat-server/internal/repository/message"
 	"github.com/Genvekt/cli-chat/services/chat-server/internal/service"
 	chatService "github.com/Genvekt/cli-chat/services/chat-server/internal/service/chat"
@@ -29,8 +33,9 @@ type ServiceProvider struct {
 	dbClient  db.Client
 	txManager db.TxManager
 
-	chatRepo    repository.ChatRepository
-	messageRepo repository.MessageRepository
+	chatRepo       repository.ChatRepository
+	chatMemberRepo repository.ChatMemberRepository
+	messageRepo    repository.MessageRepository
 
 	authClient serviceClient.AuthClient
 
@@ -119,14 +124,14 @@ func (s *ServiceProvider) TxManager(ctx context.Context) db.TxManager {
 // AuthClient provides auth service client dependency
 func (s *ServiceProvider) AuthClient() serviceClient.AuthClient {
 	if s.authClient == nil {
-		client, err := authClient.NewAuthClient(s.AuthCliGRPCConfig().Address())
+		conn, err := grpc.NewClient(s.AuthCliGRPCConfig().Address(), grpc.WithTransportCredentials(insecure.NewCredentials()))
 		if err != nil {
-			log.Fatalf("failed to connect to auth: %v", err)
+			log.Fatalf("failed to connect to auth service: %v", err)
 		}
 
-		closer.Add(client.Close)
+		s.authClient = authClient.NewAuthClient(authClient.NewAuthGrpcClient(conn))
 
-		s.authClient = client
+		closer.Add(conn.Close)
 	}
 
 	return s.authClient
@@ -139,6 +144,15 @@ func (s *ServiceProvider) ChatRepo(ctx context.Context) repository.ChatRepositor
 	}
 
 	return s.chatRepo
+}
+
+// ChatMemberRepo provides chat member repository dependency
+func (s *ServiceProvider) ChatMemberRepo(ctx context.Context) repository.ChatMemberRepository {
+	if s.chatMemberRepo == nil {
+		s.chatMemberRepo = chatMemberRepository.NewChatMemberPostgresRepository(s.DBClient(ctx))
+	}
+
+	return s.chatMemberRepo
 }
 
 // MessageRepo provides message repository dependency
@@ -155,6 +169,7 @@ func (s *ServiceProvider) ChatService(ctx context.Context) service.ChatService {
 	if s.chatService == nil {
 		s.chatService = chatService.NewChatService(
 			s.ChatRepo(ctx),
+			s.ChatMemberRepo(ctx),
 			s.MessageRepo(ctx),
 			s.AuthClient(),
 			s.TxManager(ctx),
