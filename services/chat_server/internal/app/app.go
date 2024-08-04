@@ -11,8 +11,9 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/reflection"
 
+	"github.com/Genvekt/cli-chat/libraries/closer/pkg/closer"
+
 	chatApi "github.com/Genvekt/cli-chat/libraries/api/chat/v1"
-	"github.com/Genvekt/cli-chat/services/chat-server/internal/closer"
 	"github.com/Genvekt/cli-chat/services/chat-server/internal/config"
 )
 

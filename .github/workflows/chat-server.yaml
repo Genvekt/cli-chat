@@ -5,9 +5,11 @@ on:
       - main
     paths:
       - 'services/chat_server/**'
+      - 'libraries/db_client/**'
   pull_request:
     paths:
       - 'services/chat_server/**'
+      - 'libraries/db_client/**'
 
 env:
   SERVICE_PATH: ./services/chat_server
