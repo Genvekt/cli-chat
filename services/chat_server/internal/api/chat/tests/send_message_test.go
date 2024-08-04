@@ -33,22 +33,22 @@ func TestSendMessage(t *testing.T) {
 
 		serviceErr = fmt.Errorf("service error")
 
-		chatId = gofakeit.Int64()
-		userId = gofakeit.Int64()
+		chatID = gofakeit.Int64()
+		userID = gofakeit.Int64()
 		text   = gofakeit.Sentence(15)
 		ts     = gofakeit.Date()
 
 		message = &model.Message{
-			SenderID:  userId,
-			ChatID:    chatId,
+			SenderID:  userID,
+			ChatID:    chatID,
 			Content:   text,
 			Timestamp: ts,
 		}
 
 		req = &chatApi.SendMessageRequest{
 			Message: &chatApi.Message{
-				ChatId:    chatId,
-				SenderId:  userId,
+				ChatId:    chatID,
+				SenderId:  userID,
 				Text:      text,
 				Timestamp: timestamppb.New(ts),
 			},

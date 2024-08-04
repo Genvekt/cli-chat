@@ -2,9 +2,13 @@ package chat
 
 import (
 	"context"
+	"errors"
 
 	chatApi "github.com/Genvekt/cli-chat/libraries/api/chat/v1"
 )
+
+// ErrEmptyChat indicates that there is no users in create request
+var ErrEmptyChat = errors.New("chat cannot be empty")
 
 func validateCreateRequest(req *chatApi.CreateRequest) error {
 	if len(req.Usernames) == 0 {
