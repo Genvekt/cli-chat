@@ -9,8 +9,9 @@ import (
 	"github.com/gojuno/minimock/v3"
 	"github.com/stretchr/testify/require"
 
-	"github.com/Genvekt/cli-chat/services/chat-server/internal/client/db"
-	dbMock "github.com/Genvekt/cli-chat/services/chat-server/internal/client/db/mocks"
+	"github.com/Genvekt/cli-chat/libraries/db_client/pkg/db"
+	dbMock "github.com/Genvekt/cli-chat/libraries/db_client/pkg/db/mocks"
+
 	serviceMock "github.com/Genvekt/cli-chat/services/chat-server/internal/client/service/mocks"
 	"github.com/Genvekt/cli-chat/services/chat-server/internal/model"
 

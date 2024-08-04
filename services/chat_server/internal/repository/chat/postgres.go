@@ -6,7 +6,8 @@ import (
 
 	sq "github.com/Masterminds/squirrel"
 
-	"github.com/Genvekt/cli-chat/services/chat-server/internal/client/db"
+	"github.com/Genvekt/cli-chat/libraries/db_client/pkg/db"
+
 	"github.com/Genvekt/cli-chat/services/chat-server/internal/repository"
 	"github.com/Genvekt/cli-chat/services/chat-server/internal/repository/chat/converter"
 

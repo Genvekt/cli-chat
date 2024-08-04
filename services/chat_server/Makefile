@@ -9,7 +9,7 @@ lint:
 
 test:
 	go clean -testcache
-	go test ./... -covermode count -coverpkg=github.com/olezhek28/microservices_course/week_4/tests/internal/service/...,github.com/olezhek28/microservices_course/week_4/tests/internal/api/... -count 5
+	go test ./... -covermode count -coverpkg=github.com/Genvekt/cli-chat/services/chat-server/internal/service/...,github.com/Genvekt/cli-chat/services/chat-server/internal/api/... -count 5
 
 test-coverage:
 	go clean -testcache

@@ -7,10 +7,11 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
+	"github.com/Genvekt/cli-chat/libraries/db_client/pkg/db"
+	"github.com/Genvekt/cli-chat/libraries/db_client/pkg/db/pg"
+	"github.com/Genvekt/cli-chat/libraries/db_client/pkg/db/transaction"
+
 	chatImpl "github.com/Genvekt/cli-chat/services/chat-server/internal/api/chat"
-	"github.com/Genvekt/cli-chat/services/chat-server/internal/client/db"
-	"github.com/Genvekt/cli-chat/services/chat-server/internal/client/db/pg"
-	"github.com/Genvekt/cli-chat/services/chat-server/internal/client/db/transaction"
 	serviceClient "github.com/Genvekt/cli-chat/services/chat-server/internal/client/service"
 	authClient "github.com/Genvekt/cli-chat/services/chat-server/internal/client/service/auth"
 	"github.com/Genvekt/cli-chat/services/chat-server/internal/closer"
