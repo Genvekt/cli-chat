@@ -17,6 +17,8 @@ import (
 )
 
 func TestCreate(t *testing.T) {
+	t.Parallel()
+
 	type args struct {
 		ctx context.Context
 		req *userApi.CreateRequest
@@ -119,6 +121,8 @@ func TestCreate(t *testing.T) {
 	for _, tt := range tests {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
 			userServiceMock := tt.userServiceMock(mc)
 			api := userImpl.NewService(userServiceMock)
 

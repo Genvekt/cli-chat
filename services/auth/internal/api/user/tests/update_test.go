@@ -13,10 +13,13 @@ import (
 
 	userApi "github.com/Genvekt/cli-chat/libraries/api/user/v1"
 	userImpl "github.com/Genvekt/cli-chat/services/auth/internal/api/user"
+	"github.com/Genvekt/cli-chat/services/auth/internal/model"
 	serviceMock "github.com/Genvekt/cli-chat/services/auth/internal/service/mocks"
 )
 
 func TestUpdate(t *testing.T) {
+	t.Parallel()
+
 	type args struct {
 		ctx context.Context
 		req *userApi.UpdateRequest
@@ -59,7 +62,18 @@ func TestUpdate(t *testing.T) {
 			err:  nil,
 			userServiceMock: func(mc minimock.MockController) *serviceMock.UserServiceMock {
 				mock := serviceMock.NewUserServiceMock(mc)
-				mock.UpdateMock.Return(nil)
+				mock.UpdateMock.Set(func(ctx context.Context, id int64, updateFunc func(user *model.User) error) (err error) {
+					user := &model.User{ID: id}
+					err = updateFunc(user)
+					if err != nil {
+						return err
+					}
+					require.Equal(t, user.ID, id)
+					require.Equal(t, user.Name, name)
+					require.Equal(t, user.Email, email)
+					require.Equal(t, user.Role, int(roleUser))
+					return nil
+				})
 				return mock
 			},
 		},
@@ -81,6 +95,8 @@ func TestUpdate(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
 			userServiceMock := tt.userServiceMock(mc)
 			api := userImpl.NewService(userServiceMock)
 

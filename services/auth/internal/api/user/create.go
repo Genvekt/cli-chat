@@ -11,10 +11,6 @@ import (
 var ErrPasswordsNotMatch = errors.New(`passwords do not match`)
 
 func validateCreateRequest(req *userApi.CreateRequest) error {
-	if req == nil {
-		return nil
-	}
-
 	if req.Password != req.PasswordConfirm {
 		return ErrPasswordsNotMatch
 	}
