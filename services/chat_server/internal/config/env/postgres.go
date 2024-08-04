@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	config "github.com/Genvekt/cli-chat/services/chat-server/internal"
+	"github.com/Genvekt/cli-chat/services/chat-server/internal/config"
 )
 
 var _ config.PostgresConfig = (*postgresConfigEnv)(nil)
