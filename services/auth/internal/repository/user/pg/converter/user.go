@@ -2,7 +2,7 @@ package converter
 
 import (
 	"github.com/Genvekt/cli-chat/services/auth/internal/model"
-	repoModel "github.com/Genvekt/cli-chat/services/auth/internal/repository/user/model"
+	repoModel "github.com/Genvekt/cli-chat/services/auth/internal/repository/user/pg/model"
 )
 
 // ToUserFromRepo converts user repository model to user service model

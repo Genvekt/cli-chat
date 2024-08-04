@@ -16,6 +16,24 @@ func ToUserFromProtoInfo(user *userApi.UserInfo) *model.User {
 	}
 }
 
+// ToUserUpdateDTOFromProto packs user update requiest into user update dto for service layer
+func ToUserUpdateDTOFromProto(userUpdate *userApi.UpdateRequest) *model.UserUpdateDTO {
+	dto := &model.UserUpdateDTO{ID: userUpdate.Id}
+	if userUpdate.GetName() != nil {
+		name := userUpdate.GetName().GetValue()
+		dto.Name = &name
+	}
+	if userUpdate.GetEmail() != nil {
+		email := userUpdate.GetEmail().GetValue()
+		dto.Email = &email
+	}
+	if userUpdate.Role != nil {
+		role := int(userUpdate.GetRole())
+		dto.Role = &role
+	}
+	return dto
+}
+
 // ToProtoUsersFromUsers converts slice of user service model to slice of user api model
 func ToProtoUsersFromUsers(users []*model.User) []*userApi.User {
 	protoUsers := make([]*userApi.User, 0, len(users))

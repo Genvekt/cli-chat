@@ -1,4 +1,4 @@
-package user
+package pg
 
 import (
 	"context"
@@ -9,11 +9,12 @@ import (
 	sq "github.com/Masterminds/squirrel"
 	"github.com/jackc/pgx/v4"
 
-	"github.com/Genvekt/cli-chat/services/auth/internal/client/db"
+	"github.com/Genvekt/cli-chat/libraries/db_client/pkg/db"
+	repoConverter "github.com/Genvekt/cli-chat/services/auth/internal/repository/user/pg/converter"
+	repoModel "github.com/Genvekt/cli-chat/services/auth/internal/repository/user/pg/model"
+
 	"github.com/Genvekt/cli-chat/services/auth/internal/model"
 	"github.com/Genvekt/cli-chat/services/auth/internal/repository"
-	repoConverter "github.com/Genvekt/cli-chat/services/auth/internal/repository/user/converter"
-	repoModel "github.com/Genvekt/cli-chat/services/auth/internal/repository/user/model"
 )
 
 const (

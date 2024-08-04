@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"time"
 
 	"errors"
 
@@ -17,4 +18,11 @@ type UserRepository interface {
 	GetList(ctx context.Context, names []string) ([]*model.User, error)
 	Update(ctx context.Context, id int64, updateFunc func(user *model.User) error) error
 	Delete(ctx context.Context, id int64) error
+}
+
+// UserCache manages user cache in some data source
+type UserCache interface {
+	Get(ctx context.Context, id int64) (*model.User, error)
+	Set(ctx context.Context, user *model.User) error
+	Expire(ctx context.Context, id int64, timeout time.Duration) error
 }

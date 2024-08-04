@@ -4,15 +4,22 @@ import (
 	"context"
 	"log"
 
+	redigo "github.com/gomodule/redigo/redis"
+
+	"github.com/Genvekt/cli-chat/libraries/closer/pkg/closer"
+
+	"github.com/Genvekt/cli-chat/libraries/cache_client/pkg/cache"
+	"github.com/Genvekt/cli-chat/libraries/cache_client/pkg/cache/redis"
+	cacheConfig "github.com/Genvekt/cli-chat/libraries/cache_client/pkg/config"
+	"github.com/Genvekt/cli-chat/libraries/db_client/pkg/db"
+	"github.com/Genvekt/cli-chat/libraries/db_client/pkg/db/pg"
+	"github.com/Genvekt/cli-chat/libraries/db_client/pkg/db/transaction"
 	userImpl "github.com/Genvekt/cli-chat/services/auth/internal/api/user"
-	"github.com/Genvekt/cli-chat/services/auth/internal/client/db"
-	"github.com/Genvekt/cli-chat/services/auth/internal/client/db/pg"
-	"github.com/Genvekt/cli-chat/services/auth/internal/client/db/transaction"
-	"github.com/Genvekt/cli-chat/services/auth/internal/closer"
 	"github.com/Genvekt/cli-chat/services/auth/internal/config"
 	"github.com/Genvekt/cli-chat/services/auth/internal/config/env"
 	"github.com/Genvekt/cli-chat/services/auth/internal/repository"
-	userRepository "github.com/Genvekt/cli-chat/services/auth/internal/repository/user"
+	userRepository "github.com/Genvekt/cli-chat/services/auth/internal/repository/user/pg"
+	userCache "github.com/Genvekt/cli-chat/services/auth/internal/repository/user/redis"
 	"github.com/Genvekt/cli-chat/services/auth/internal/service"
 	userService "github.com/Genvekt/cli-chat/services/auth/internal/service/user"
 )
@@ -21,11 +28,17 @@ import (
 type ServiceProvider struct {
 	gRPCConfig     config.GRPCConfig
 	postgresConfig config.PostgresConfig
+	redisConfig    cacheConfig.RedisConfig
 
 	dbClient  db.Client
 	txManager db.TxManager
 
+	redisPool   *redigo.Pool
+	redisClient cache.RedisClient
+
 	userRepo repository.UserRepository
+
+	userCache repository.UserCache
 
 	userService service.UserService
 
@@ -64,6 +77,20 @@ func (s *ServiceProvider) PGConfig() config.PostgresConfig {
 	return s.postgresConfig
 }
 
+// RedisConfig provides configuration parameters for redis cache
+func (s *ServiceProvider) RedisConfig() cacheConfig.RedisConfig {
+	if s.redisConfig == nil {
+		redisConfig, err := env.NewRedisConfig()
+		if err != nil {
+			log.Fatalf("failed to load redis config: %v", err)
+		}
+
+		s.redisConfig = redisConfig
+	}
+
+	return s.redisConfig
+}
+
 // DBClient provides DB client over postgres
 func (s *ServiceProvider) DBClient(ctx context.Context) db.Client {
 	if s.dbClient == nil {
@@ -95,6 +122,41 @@ func (s *ServiceProvider) TxManager(ctx context.Context) db.TxManager {
 	return s.txManager
 }
 
+// RedisPool creates connection to redis
+func (s *ServiceProvider) RedisPool() *redigo.Pool {
+	if s.redisPool == nil {
+		s.redisPool = &redigo.Pool{
+			MaxIdle:     s.RedisConfig().MaxIdle(),
+			IdleTimeout: s.RedisConfig().IdleTimeout(),
+			DialContext: func(ctx context.Context) (redigo.Conn, error) {
+				return redigo.DialContext(ctx, "tcp", s.RedisConfig().Address())
+			},
+		}
+
+		closer.Add(s.redisPool.Close)
+	}
+
+	return s.redisPool
+}
+
+// RedisClient provides redis client dependency
+func (s *ServiceProvider) RedisClient() cache.RedisClient {
+	if s.redisClient == nil {
+		s.redisClient = redis.NewClient(s.RedisPool(), s.RedisConfig())
+	}
+
+	return s.redisClient
+}
+
+// UserCache provides user cache dependency
+func (s *ServiceProvider) UserCache() repository.UserCache {
+	if s.userCache == nil {
+		s.userCache = userCache.NewUserCacheRedis(s.RedisClient())
+	}
+
+	return s.userCache
+}
+
 // UserRepo provides user repository dependency
 func (s *ServiceProvider) UserRepo(ctx context.Context) repository.UserRepository {
 	if s.userRepo == nil {
@@ -107,7 +169,11 @@ func (s *ServiceProvider) UserRepo(ctx context.Context) repository.UserRepositor
 // UserService initialises user service layer
 func (s *ServiceProvider) UserService(ctx context.Context) service.UserService {
 	if s.userService == nil {
-		s.userService = userService.NewUserService(s.UserRepo(ctx), s.TxManager(ctx))
+		s.userService = userService.NewUserService(
+			s.UserRepo(ctx),
+			s.UserCache(),
+			s.TxManager(ctx),
+		)
 	}
 
 	return s.userService
