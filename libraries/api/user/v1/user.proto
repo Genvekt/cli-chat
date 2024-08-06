@@ -12,6 +12,7 @@ option go_package = "github.com/Genvekt/cli-chat/libraries/api/user/v1;user_v1";
 service UserV1{
   rpc Create(CreateRequest) returns (CreateResponse);
   rpc Get(GetRequest) returns (GetResponse);
+  rpc GetList(GetListRequest) returns (GetListResponse);
   rpc Update(UpdateRequest) returns (google.protobuf.Empty);
   rpc Delete(DeleteRequest) returns (google.protobuf.Empty);
 }
@@ -22,12 +23,25 @@ enum UserRole {
   ADMIN = 2;
 }
 
-message CreateRequest {
+message UserInfo {
   string name = 1;
   string email = 2;
+  UserRole role = 3;
+}
+
+message User {
+  int64 id = 1;
+  UserInfo info = 2;
+  google.protobuf.Timestamp created_at = 3;
+  google.protobuf.Timestamp updated_at = 4;
+}
+
+message CreateRequest {
+  reserved 1, 2;
   string password = 3;
   string password_confirm = 4;
-  UserRole role = 5;
+  reserved 5;
+  UserInfo info = 6;
 }
 
 message CreateResponse{
@@ -39,12 +53,8 @@ message GetRequest{
 }
 
 message GetResponse{
-  int64 id = 1;
-  string name = 2;
-  string email = 3;
-  UserRole role = 4;
-  google.protobuf.Timestamp created_at = 7;
-  google.protobuf.Timestamp updated_at = 6;
+  reserved 1 to 6;
+  User user = 7;
 }
 
 message UpdateRequest{
@@ -56,4 +66,12 @@ message UpdateRequest{
 
 message DeleteRequest{
   int64 id = 1;
+}
+
+message GetListRequest{
+  repeated string names = 1;
+}
+
+message GetListResponse {
+  repeated User users = 1;
 }
