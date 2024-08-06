@@ -5,7 +5,7 @@ import (
 	"net"
 	"os"
 
-	config "github.com/Genvekt/cli-chat/services/auth/internal"
+	"github.com/Genvekt/cli-chat/services/auth/internal/config"
 )
 
 var _ config.GRPCConfig = (*gRPCConfigEnv)(nil)

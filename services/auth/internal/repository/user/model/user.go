@@ -1,8 +1,8 @@
-package model
+package user
 
 import "time"
 
-// User model
+// User repository model
 type User struct {
 	ID        int64     `json:"id"`
 	Name      string    `json:"name"`
