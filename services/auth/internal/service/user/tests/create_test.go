@@ -11,6 +11,7 @@ import (
 
 	userApi "github.com/Genvekt/cli-chat/libraries/api/user/v1"
 	dbMock "github.com/Genvekt/cli-chat/libraries/db_client/pkg/db/mocks"
+	configMock "github.com/Genvekt/cli-chat/services/auth/internal/config/mocks"
 	"github.com/Genvekt/cli-chat/services/auth/internal/model"
 	repoMock "github.com/Genvekt/cli-chat/services/auth/internal/repository/mocks"
 	userService "github.com/Genvekt/cli-chat/services/auth/internal/service/user"
@@ -25,6 +26,7 @@ func TestCreateWithCache(t *testing.T) {
 	type userRepoMockFunc func(mc minimock.MockController) *repoMock.UserRepositoryMock
 	type userCacheMockFunc func(mc minimock.MockController) *repoMock.UserCacheMock
 	type txManagerMockFunc func(mc minimock.MockController) *dbMock.TxManagerMock
+	type configMockFunc func(mc minimock.MockController) *configMock.UserServiceConfigMock
 
 	var (
 		ctx = context.Background()
@@ -52,6 +54,7 @@ func TestCreateWithCache(t *testing.T) {
 		userRepoMockFunc  userRepoMockFunc
 		userCacheMockFunc userCacheMockFunc
 		txManagerMockFunc txManagerMockFunc
+		configMockFunc    configMockFunc
 	}{
 		{
 			name: "Success with cache",
@@ -68,6 +71,10 @@ func TestCreateWithCache(t *testing.T) {
 			},
 			userCacheMockFunc: func(mc minimock.MockController) *repoMock.UserCacheMock {
 				mock := repoMock.NewUserCacheMock(mc)
+				return mock
+			},
+			configMockFunc: func(mc minimock.MockController) *configMock.UserServiceConfigMock {
+				mock := configMock.NewUserServiceConfigMock(mc)
 				return mock
 			},
 			txManagerMockFunc: func(mc minimock.MockController) *dbMock.TxManagerMock {
@@ -91,6 +98,10 @@ func TestCreateWithCache(t *testing.T) {
 				mock := repoMock.NewUserCacheMock(mc)
 				return mock
 			},
+			configMockFunc: func(mc minimock.MockController) *configMock.UserServiceConfigMock {
+				mock := configMock.NewUserServiceConfigMock(mc)
+				return mock
+			},
 			txManagerMockFunc: func(mc minimock.MockController) *dbMock.TxManagerMock {
 				return dbMock.NewTxManagerMock(mc)
 			},
@@ -103,7 +114,8 @@ func TestCreateWithCache(t *testing.T) {
 			userRepoMock := tt.userRepoMockFunc(mc)
 			userCacheMock := tt.userCacheMockFunc(mc)
 			txManagerMock := tt.txManagerMockFunc(mc)
-			service := userService.NewUserService(userRepoMock, userCacheMock, txManagerMock)
+			confMock := tt.configMockFunc(mc)
+			service := userService.NewUserService(userRepoMock, userCacheMock, txManagerMock, confMock)
 
 			servRes, err := service.Create(tt.args.ctx, tt.args.req)
 			require.Equal(t, tt.want, servRes)
@@ -124,6 +136,7 @@ func TestCreateWithoutCache(t *testing.T) {
 
 	type userRepoMockFunc func(mc minimock.MockController) *repoMock.UserRepositoryMock
 	type txManagerMockFunc func(mc minimock.MockController) *dbMock.TxManagerMock
+	type configMockFunc func(mc minimock.MockController) *configMock.UserServiceConfigMock
 
 	var (
 		ctx = context.Background()
@@ -150,6 +163,7 @@ func TestCreateWithoutCache(t *testing.T) {
 		err               error
 		userRepoMockFunc  userRepoMockFunc
 		txManagerMockFunc txManagerMockFunc
+		configMockFunc    configMockFunc
 	}{
 		{
 			name: "Success",
@@ -162,6 +176,10 @@ func TestCreateWithoutCache(t *testing.T) {
 			userRepoMockFunc: func(mc minimock.MockController) *repoMock.UserRepositoryMock {
 				mock := repoMock.NewUserRepositoryMock(mc)
 				mock.CreateMock.Expect(ctx, req).Return(id, nil)
+				return mock
+			},
+			configMockFunc: func(mc minimock.MockController) *configMock.UserServiceConfigMock {
+				mock := configMock.NewUserServiceConfigMock(mc)
 				return mock
 			},
 			txManagerMockFunc: func(mc minimock.MockController) *dbMock.TxManagerMock {
@@ -181,6 +199,10 @@ func TestCreateWithoutCache(t *testing.T) {
 				mock.CreateMock.Expect(ctx, req).Return(0, repoErr)
 				return mock
 			},
+			configMockFunc: func(mc minimock.MockController) *configMock.UserServiceConfigMock {
+				mock := configMock.NewUserServiceConfigMock(mc)
+				return mock
+			},
 			txManagerMockFunc: func(mc minimock.MockController) *dbMock.TxManagerMock {
 				return dbMock.NewTxManagerMock(mc)
 			},
@@ -192,7 +214,8 @@ func TestCreateWithoutCache(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			userRepoMock := tt.userRepoMockFunc(mc)
 			txManagerMock := tt.txManagerMockFunc(mc)
-			service := userService.NewUserService(userRepoMock, nil, txManagerMock)
+			confMock := tt.configMockFunc(mc)
+			service := userService.NewUserService(userRepoMock, nil, txManagerMock, confMock)
 
 			servRes, err := service.Create(tt.args.ctx, tt.args.req)
 			require.Equal(t, tt.want, servRes)

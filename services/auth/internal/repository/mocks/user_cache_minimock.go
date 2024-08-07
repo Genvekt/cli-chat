@@ -9,9 +9,8 @@ import (
 	"time"
 	mm_time "time"
 
-	"github.com/gojuno/minimock/v3"
-
 	"github.com/Genvekt/cli-chat/services/auth/internal/model"
+	"github.com/gojuno/minimock/v3"
 )
 
 // UserCacheMock implements repository.UserCache

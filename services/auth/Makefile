@@ -12,7 +12,8 @@ docker-build:
 
 generate-mocks:
 	go generate ./internal/service/
-	go generate ./internal/repository
+	go generate ./internal/repository/
+	go generate ./internal/config/
 
 test:
 	go clean -testcache

@@ -11,6 +11,7 @@ import (
 
 	userApi "github.com/Genvekt/cli-chat/libraries/api/user/v1"
 	dbMock "github.com/Genvekt/cli-chat/libraries/db_client/pkg/db/mocks"
+	configMock "github.com/Genvekt/cli-chat/services/auth/internal/config/mocks"
 
 	"github.com/Genvekt/cli-chat/services/auth/internal/model"
 	repoMock "github.com/Genvekt/cli-chat/services/auth/internal/repository/mocks"
@@ -27,6 +28,7 @@ func TestGetList(t *testing.T) {
 
 	type userRepoMockFunc func(mc minimock.MockController) *repoMock.UserRepositoryMock
 	type userCacheMockFunc func(mc minimock.MockController) *repoMock.UserCacheMock
+	type configMockFunc func(mc minimock.MockController) *configMock.UserServiceConfigMock
 	type txManagerMockFunc func(mc minimock.MockController) *dbMock.TxManagerMock
 
 	var (
@@ -53,7 +55,8 @@ func TestGetList(t *testing.T) {
 		err               error
 		userCacheMockFunc userCacheMockFunc
 		userRepoMockFunc  userRepoMockFunc
-		txManagerMockFunc
+		configMockFunc    configMockFunc
+		txManagerMockFunc txManagerMockFunc
 	}{
 		{
 			name: "Success",
@@ -70,6 +73,10 @@ func TestGetList(t *testing.T) {
 			},
 			userCacheMockFunc: func(_ minimock.MockController) *repoMock.UserCacheMock {
 				return nil
+			},
+			configMockFunc: func(mc minimock.MockController) *configMock.UserServiceConfigMock {
+				mock := configMock.NewUserServiceConfigMock(mc)
+				return mock
 			},
 			txManagerMockFunc: func(mc minimock.MockController) *dbMock.TxManagerMock {
 				return dbMock.NewTxManagerMock(mc)
@@ -91,6 +98,10 @@ func TestGetList(t *testing.T) {
 			userCacheMockFunc: func(_ minimock.MockController) *repoMock.UserCacheMock {
 				return nil
 			},
+			configMockFunc: func(mc minimock.MockController) *configMock.UserServiceConfigMock {
+				mock := configMock.NewUserServiceConfigMock(mc)
+				return mock
+			},
 			txManagerMockFunc: func(mc minimock.MockController) *dbMock.TxManagerMock {
 				return dbMock.NewTxManagerMock(mc)
 			},
@@ -105,7 +116,8 @@ func TestGetList(t *testing.T) {
 			userRepoMock := tt.userRepoMockFunc(mc)
 			userCacheMock := tt.userCacheMockFunc(mc)
 			txManagerMock := tt.txManagerMockFunc(mc)
-			service := userService.NewUserService(userRepoMock, userCacheMock, txManagerMock)
+			confMock := tt.configMockFunc(mc)
+			service := userService.NewUserService(userRepoMock, userCacheMock, txManagerMock, confMock)
 
 			servRes, err := service.GetList(tt.args.ctx, tt.args.req)
 			require.Equal(t, tt.want, servRes)

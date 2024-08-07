@@ -26,9 +26,10 @@ import (
 
 // ServiceProvider initialises and stores various dependencies as singletons
 type ServiceProvider struct {
-	gRPCConfig     config.GRPCConfig
-	postgresConfig config.PostgresConfig
-	redisConfig    cacheConfig.RedisConfig
+	gRPCConfig        config.GRPCConfig
+	postgresConfig    config.PostgresConfig
+	redisConfig       cacheConfig.RedisConfig
+	userServiceConfig config.UserServiceConfig
 
 	dbClient  db.Client
 	txManager db.TxManager
@@ -166,6 +167,19 @@ func (s *ServiceProvider) UserRepo(ctx context.Context) repository.UserRepositor
 	return s.userRepo
 }
 
+// UserServiceConfig provides config for user dervice
+func (s *ServiceProvider) UserServiceConfig() config.UserServiceConfig {
+	if s.userServiceConfig == nil {
+		userServiceConfig, err := env.NewUserServiceConfigEnv()
+		if err != nil {
+			log.Fatalf("failed to load user service config: %v", err)
+		}
+		s.userServiceConfig = userServiceConfig
+	}
+
+	return s.userServiceConfig
+}
+
 // UserService initialises user service layer
 func (s *ServiceProvider) UserService(ctx context.Context) service.UserService {
 	if s.userService == nil {
@@ -173,6 +187,7 @@ func (s *ServiceProvider) UserService(ctx context.Context) service.UserService {
 			s.UserRepo(ctx),
 			s.UserCache(),
 			s.TxManager(ctx),
+			s.UserServiceConfig(),
 		)
 	}
 

@@ -18,7 +18,7 @@ func (s *userService) setCache(ctx context.Context, user *model.User) error {
 	}
 
 	// Set timeout for user
-	err = s.userCache.Expire(ctx, user.ID, cacheTimeout)
+	err = s.userCache.Expire(ctx, user.ID, s.config.CacheTTL())
 	if err != nil {
 		return err
 	}
@@ -38,7 +38,7 @@ func (s *userService) getCache(ctx context.Context, id int64) (*model.User, erro
 	}
 
 	// Reset timeout for user as it was recently retrieved
-	err = s.userCache.Expire(ctx, id, cacheTimeout)
+	err = s.userCache.Expire(ctx, id, s.config.CacheTTL())
 	if err != nil {
 		return nil, err
 	}
