@@ -26,7 +26,6 @@ func TestDeleteWithCache(t *testing.T) {
 	type userRepoMockFunc func(mc minimock.MockController) *repoMock.UserRepositoryMock
 	type userCacheMockFunc func(mc minimock.MockController) *repoMock.UserCacheMock
 	type txManagerMockFunc func(mc minimock.MockController) *dbMock.TxManagerMock
-	type configMockFunc func(mc minimock.MockController) *configMock.UserServiceConfigMock
 
 	var (
 		ctx = context.Background()
@@ -43,7 +42,6 @@ func TestDeleteWithCache(t *testing.T) {
 		err               error
 		userCacheMockFunc userCacheMockFunc
 		userRepoMockFunc  userRepoMockFunc
-		configMockFunc    configMockFunc
 		txManagerMockFunc txManagerMockFunc
 	}{
 		{
@@ -61,11 +59,6 @@ func TestDeleteWithCache(t *testing.T) {
 			userCacheMockFunc: func(_ minimock.MockController) *repoMock.UserCacheMock {
 				mock := repoMock.NewUserCacheMock(mc)
 				mock.DeleteMock.Expect(ctx, id).Return(nil)
-				return mock
-			},
-			configMockFunc: func(mc minimock.MockController) *configMock.UserServiceConfigMock {
-				mock := configMock.NewUserServiceConfigMock(mc)
-				mock.NoCacheMock.Return(false)
 				return mock
 			},
 			txManagerMockFunc: func(mc minimock.MockController) *dbMock.TxManagerMock {
@@ -90,10 +83,6 @@ func TestDeleteWithCache(t *testing.T) {
 			},
 			userCacheMockFunc: func(_ minimock.MockController) *repoMock.UserCacheMock {
 				return nil
-			},
-			configMockFunc: func(mc minimock.MockController) *configMock.UserServiceConfigMock {
-				mock := configMock.NewUserServiceConfigMock(mc)
-				return mock
 			},
 			txManagerMockFunc: func(mc minimock.MockController) *dbMock.TxManagerMock {
 				mock := dbMock.NewTxManagerMock(mc)
@@ -120,11 +109,6 @@ func TestDeleteWithCache(t *testing.T) {
 				mock.DeleteMock.Expect(ctx, id).Return(repoErr)
 				return mock
 			},
-			configMockFunc: func(mc minimock.MockController) *configMock.UserServiceConfigMock {
-				mock := configMock.NewUserServiceConfigMock(mc)
-				mock.NoCacheMock.Return(false)
-				return mock
-			},
 			txManagerMockFunc: func(mc minimock.MockController) *dbMock.TxManagerMock {
 				mock := dbMock.NewTxManagerMock(mc)
 				mock.ReadCommittedMock.Set(func(ctx context.Context, f db.Handler) (err error) {
@@ -141,7 +125,10 @@ func TestDeleteWithCache(t *testing.T) {
 			userRepoMock := tt.userRepoMockFunc(mc)
 			userCacheMock := tt.userCacheMockFunc(mc)
 			txManagerMock := tt.txManagerMockFunc(mc)
-			confMock := tt.configMockFunc(mc)
+
+			confMock := configMock.NewUserServiceConfigMock(mc)
+			confMock.NoCacheMock.Optional().Set(func() bool { return false })
+
 			service := userService.NewUserService(userRepoMock, userCacheMock, txManagerMock, confMock)
 
 			err := service.Delete(tt.args.ctx, tt.args.req)
@@ -162,7 +149,6 @@ func TestDeleteWithoutCache(t *testing.T) {
 
 	type userRepoMockFunc func(mc minimock.MockController) *repoMock.UserRepositoryMock
 	type txManagerMockFunc func(mc minimock.MockController) *dbMock.TxManagerMock
-	type configMockFunc func(mc minimock.MockController) *configMock.UserServiceConfigMock
 
 	var (
 		ctx = context.Background()
@@ -178,7 +164,6 @@ func TestDeleteWithoutCache(t *testing.T) {
 		args              args
 		err               error
 		userRepoMockFunc  userRepoMockFunc
-		configMockFunc    configMockFunc
 		txManagerMockFunc txManagerMockFunc
 	}{
 		{
@@ -191,11 +176,6 @@ func TestDeleteWithoutCache(t *testing.T) {
 			userRepoMockFunc: func(mc minimock.MockController) *repoMock.UserRepositoryMock {
 				mock := repoMock.NewUserRepositoryMock(mc)
 				mock.DeleteMock.Expect(ctx, id).Return(nil)
-				return mock
-			},
-			configMockFunc: func(mc minimock.MockController) *configMock.UserServiceConfigMock {
-				mock := configMock.NewUserServiceConfigMock(mc)
-				mock.NoCacheMock.Return(true)
 				return mock
 			},
 			txManagerMockFunc: func(mc minimock.MockController) *dbMock.TxManagerMock {
@@ -218,10 +198,6 @@ func TestDeleteWithoutCache(t *testing.T) {
 				mock.DeleteMock.Expect(ctx, id).Return(repoErr)
 				return mock
 			},
-			configMockFunc: func(mc minimock.MockController) *configMock.UserServiceConfigMock {
-				mock := configMock.NewUserServiceConfigMock(mc)
-				return mock
-			},
 			txManagerMockFunc: func(mc minimock.MockController) *dbMock.TxManagerMock {
 				mock := dbMock.NewTxManagerMock(mc)
 				mock.ReadCommittedMock.Set(func(ctx context.Context, f db.Handler) (err error) {
@@ -237,7 +213,10 @@ func TestDeleteWithoutCache(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			userRepoMock := tt.userRepoMockFunc(mc)
 			txManagerMock := tt.txManagerMockFunc(mc)
-			confMock := tt.configMockFunc(mc)
+
+			confMock := configMock.NewUserServiceConfigMock(mc)
+			confMock.NoCacheMock.Optional().Set(func() bool { return true })
+
 			service := userService.NewUserService(userRepoMock, nil, txManagerMock, confMock)
 
 			err := service.Delete(tt.args.ctx, tt.args.req)

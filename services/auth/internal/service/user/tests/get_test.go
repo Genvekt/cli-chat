@@ -29,7 +29,6 @@ func TestGetWithCache(t *testing.T) {
 	type userRepoMockFunc func(mc minimock.MockController) *repoMock.UserRepositoryMock
 	type userCacheMockFunc func(mc minimock.MockController) *repoMock.UserCacheMock
 	type txManagerMockFunc func(mc minimock.MockController) *dbMock.TxManagerMock
-	type configMockFunc func(mc minimock.MockController) *configMock.UserServiceConfigMock
 
 	var (
 		ctx = context.Background()
@@ -59,7 +58,6 @@ func TestGetWithCache(t *testing.T) {
 		err               error
 		userCacheMockFunc userCacheMockFunc
 		userRepoMockFunc  userRepoMockFunc
-		configMockFunc    configMockFunc
 		txManagerMockFunc txManagerMockFunc
 	}{
 		{
@@ -78,12 +76,6 @@ func TestGetWithCache(t *testing.T) {
 				mock := repoMock.NewUserCacheMock(mc)
 				mock.GetMock.Expect(ctx, id).Return(user, nil)
 				mock.ExpireMock.Expect(ctx, id, cacheTTL).Return(nil)
-				return mock
-			},
-			configMockFunc: func(mc minimock.MockController) *configMock.UserServiceConfigMock {
-				mock := configMock.NewUserServiceConfigMock(mc)
-				mock.CacheTTLMock.Return(cacheTTL)
-				mock.NoCacheMock.Return(false)
 				return mock
 			},
 			txManagerMockFunc: func(mc minimock.MockController) *dbMock.TxManagerMock {
@@ -110,12 +102,6 @@ func TestGetWithCache(t *testing.T) {
 				mock.ExpireMock.Expect(ctx, id, cacheTTL).Return(nil)
 				return mock
 			},
-			configMockFunc: func(mc minimock.MockController) *configMock.UserServiceConfigMock {
-				mock := configMock.NewUserServiceConfigMock(mc)
-				mock.CacheTTLMock.Return(cacheTTL)
-				mock.NoCacheMock.Return(false)
-				return mock
-			},
 			txManagerMockFunc: func(mc minimock.MockController) *dbMock.TxManagerMock {
 				return dbMock.NewTxManagerMock(mc)
 			},
@@ -140,12 +126,6 @@ func TestGetWithCache(t *testing.T) {
 				mock.ExpireMock.Expect(ctx, id, cacheTTL).Return(nil)
 				return mock
 			},
-			configMockFunc: func(mc minimock.MockController) *configMock.UserServiceConfigMock {
-				mock := configMock.NewUserServiceConfigMock(mc)
-				mock.CacheTTLMock.Return(cacheTTL)
-				mock.NoCacheMock.Return(false)
-				return mock
-			},
 			txManagerMockFunc: func(mc minimock.MockController) *dbMock.TxManagerMock {
 				return dbMock.NewTxManagerMock(mc)
 			},
@@ -161,11 +141,6 @@ func TestGetWithCache(t *testing.T) {
 			userRepoMockFunc: func(mc minimock.MockController) *repoMock.UserRepositoryMock {
 				mock := repoMock.NewUserRepositoryMock(mc)
 				mock.GetMock.Expect(ctx, id).Return(nil, repoErr)
-				return mock
-			},
-			configMockFunc: func(mc minimock.MockController) *configMock.UserServiceConfigMock {
-				mock := configMock.NewUserServiceConfigMock(mc)
-				mock.NoCacheMock.Return(false)
 				return mock
 			},
 			userCacheMockFunc: func(_ minimock.MockController) *repoMock.UserCacheMock {
@@ -188,11 +163,6 @@ func TestGetWithCache(t *testing.T) {
 			userRepoMockFunc: func(mc minimock.MockController) *repoMock.UserRepositoryMock {
 				mock := repoMock.NewUserRepositoryMock(mc)
 				mock.GetMock.Expect(ctx, id).Return(user, nil)
-				return mock
-			},
-			configMockFunc: func(mc minimock.MockController) *configMock.UserServiceConfigMock {
-				mock := configMock.NewUserServiceConfigMock(mc)
-				mock.NoCacheMock.Return(false)
 				return mock
 			},
 			userCacheMockFunc: func(_ minimock.MockController) *repoMock.UserCacheMock {
@@ -218,12 +188,6 @@ func TestGetWithCache(t *testing.T) {
 				mock.GetMock.Expect(ctx, id).Return(user, nil)
 				return mock
 			},
-			configMockFunc: func(mc minimock.MockController) *configMock.UserServiceConfigMock {
-				mock := configMock.NewUserServiceConfigMock(mc)
-				mock.CacheTTLMock.Return(cacheTTL)
-				mock.NoCacheMock.Return(false)
-				return mock
-			},
 			userCacheMockFunc: func(_ minimock.MockController) *repoMock.UserCacheMock {
 				mock := repoMock.NewUserCacheMock(mc)
 				mock.GetMock.Expect(ctx, id).Return(nil, repository.ErrUserNotFound)
@@ -243,7 +207,11 @@ func TestGetWithCache(t *testing.T) {
 			userRepoMock := tt.userRepoMockFunc(mc)
 			userCacheMock := tt.userCacheMockFunc(mc)
 			txManagerMock := tt.txManagerMockFunc(mc)
-			confMock := tt.configMockFunc(mc)
+
+			confMock := configMock.NewUserServiceConfigMock(mc)
+			confMock.NoCacheMock.Optional().Set(func() bool { return false })
+			confMock.CacheTTLMock.Optional().Set(func() time.Duration { return cacheTTL })
+
 			service := userService.NewUserService(userRepoMock, userCacheMock, txManagerMock, confMock)
 
 			servRes, err := service.Get(tt.args.ctx, tt.args.req)
@@ -265,7 +233,6 @@ func TestGetWithoutCache(t *testing.T) {
 
 	type userRepoMockFunc func(mc minimock.MockController) *repoMock.UserRepositoryMock
 	type txManagerMockFunc func(mc minimock.MockController) *dbMock.TxManagerMock
-	type configMockFunc func(mc minimock.MockController) *configMock.UserServiceConfigMock
 
 	var (
 		ctx = context.Background()
@@ -292,7 +259,6 @@ func TestGetWithoutCache(t *testing.T) {
 		want              *model.User
 		err               error
 		userRepoMockFunc  userRepoMockFunc
-		configMockFunc    configMockFunc
 		txManagerMockFunc txManagerMockFunc
 	}{
 		{
@@ -306,11 +272,6 @@ func TestGetWithoutCache(t *testing.T) {
 			userRepoMockFunc: func(mc minimock.MockController) *repoMock.UserRepositoryMock {
 				mock := repoMock.NewUserRepositoryMock(mc)
 				mock.GetMock.Expect(ctx, id).Return(user, nil)
-				return mock
-			},
-			configMockFunc: func(mc minimock.MockController) *configMock.UserServiceConfigMock {
-				mock := configMock.NewUserServiceConfigMock(mc)
-				mock.NoCacheMock.Return(true)
 				return mock
 			},
 			txManagerMockFunc: func(mc minimock.MockController) *dbMock.TxManagerMock {
@@ -330,11 +291,6 @@ func TestGetWithoutCache(t *testing.T) {
 				mock.GetMock.Expect(ctx, id).Return(nil, repoErr)
 				return mock
 			},
-			configMockFunc: func(mc minimock.MockController) *configMock.UserServiceConfigMock {
-				mock := configMock.NewUserServiceConfigMock(mc)
-				mock.NoCacheMock.Return(true)
-				return mock
-			},
 			txManagerMockFunc: func(mc minimock.MockController) *dbMock.TxManagerMock {
 				return dbMock.NewTxManagerMock(mc)
 			},
@@ -346,7 +302,10 @@ func TestGetWithoutCache(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			userRepoMock := tt.userRepoMockFunc(mc)
 			txManagerMock := tt.txManagerMockFunc(mc)
-			confMock := tt.configMockFunc(mc)
+
+			confMock := configMock.NewUserServiceConfigMock(mc)
+			confMock.NoCacheMock.Optional().Set(func() bool { return true })
+
 			service := userService.NewUserService(userRepoMock, nil, txManagerMock, confMock)
 
 			servRes, err := service.Get(tt.args.ctx, tt.args.req)
