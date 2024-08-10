@@ -127,6 +127,22 @@ func (c *client) Ping(ctx context.Context) error {
 	return nil
 }
 
+func (c *client) Delete(ctx context.Context, key string) error {
+	err := c.execute(ctx, func(ctx context.Context, conn redis.Conn) error {
+		_, err := conn.Do("DEL", key)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (c *client) execute(ctx context.Context, handler handler) error {
 	conn, err := c.getConnect(ctx)
 	if err != nil {
