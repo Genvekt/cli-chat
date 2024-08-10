@@ -34,4 +34,6 @@ type PostgresConfig interface {
 // UserServiceConfig provides parameters related to user service
 type UserServiceConfig interface {
 	CacheTTL() time.Duration
+	NoCache() bool
+	UseCache() bool
 }

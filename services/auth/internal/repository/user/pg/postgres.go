@@ -188,11 +188,16 @@ func (r *userRepositoryPostgres) Delete(ctx context.Context, id int64) error {
 }
 
 // GetList retrieves users by their names
-func (r *userRepositoryPostgres) GetList(ctx context.Context, names []string) ([]*model.User, error) {
+func (r *userRepositoryPostgres) GetList(ctx context.Context, filters *model.UserFilters) ([]*model.User, error) {
+	dbFilters := repoConverter.ToRepoFiltersFromFilters(filters)
+
 	builderQuery := sq.Select(idColumn, nameColumn, emailColumn, roleColumn, createdAtColumn, updatedAtColumn).
 		PlaceholderFormat(sq.Dollar).
-		From(userTable).
-		Where(sq.Eq{nameColumn: names})
+		From(userTable)
+
+	if len(dbFilters.Names) > 0 {
+		builderQuery = builderQuery.Where(sq.Eq{nameColumn: filters.Names})
+	}
 
 	query, args, err := builderQuery.ToSql()
 	if err != nil {

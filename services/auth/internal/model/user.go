@@ -19,3 +19,8 @@ type UserUpdateDTO struct {
 	Email *string `json:"email"`
 	Role  *int    `json:"role"`
 }
+
+// UserFilters is a collection of AND filters that may be used to query users
+type UserFilters struct {
+	Names []string `json:"names"`
+}

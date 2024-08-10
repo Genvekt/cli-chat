@@ -71,7 +71,8 @@ func TestGetList(t *testing.T) {
 
 		serviceErr = fmt.Errorf("service error")
 		names      = []string{userModel1.Name, userModel2.Name, gofakeit.Username()}
-		req        = &userApi.GetListRequest{Names: names}
+		req        = &userApi.GetListRequest{Filters: &userApi.GetListFilters{Names: names}}
+		filters    = &model.UserFilters{Names: names}
 		res        = &userApi.GetListResponse{Users: []*userApi.User{user1, user2}}
 	)
 
@@ -92,7 +93,7 @@ func TestGetList(t *testing.T) {
 			err:  nil,
 			userServiceMock: func(mc minimock.MockController) *serviceMock.UserServiceMock {
 				mock := serviceMock.NewUserServiceMock(mc)
-				mock.GetListMock.Expect(cxt, names).Return([]*model.User{userModel1, userModel2}, nil)
+				mock.GetListMock.Expect(cxt, filters).Return([]*model.User{userModel1, userModel2}, nil)
 				return mock
 			},
 		},
@@ -106,7 +107,7 @@ func TestGetList(t *testing.T) {
 			err:  serviceErr,
 			userServiceMock: func(mc minimock.MockController) *serviceMock.UserServiceMock {
 				mock := serviceMock.NewUserServiceMock(mc)
-				mock.GetListMock.Expect(cxt, names).Return(nil, serviceErr)
+				mock.GetListMock.Expect(cxt, filters).Return(nil, serviceErr)
 				return mock
 			},
 		},

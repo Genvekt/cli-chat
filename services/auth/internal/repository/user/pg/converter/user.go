@@ -25,3 +25,10 @@ func ToUsersFromRepo(users []*repoModel.User) []*model.User {
 	}
 	return serviceUsers
 }
+
+// ToRepoFiltersFromFilters Converts user filters from service layer to filters in repository layer
+func ToRepoFiltersFromFilters(filters *model.UserFilters) *repoModel.Filters {
+	return &repoModel.Filters{
+		Names: filters.Names,
+	}
+}

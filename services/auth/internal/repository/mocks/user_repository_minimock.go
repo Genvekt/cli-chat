@@ -35,8 +35,8 @@ type UserRepositoryMock struct {
 	beforeGetCounter uint64
 	GetMock          mUserRepositoryMockGet
 
-	funcGetList          func(ctx context.Context, names []string) (upa1 []*model.User, err error)
-	inspectFuncGetList   func(ctx context.Context, names []string)
+	funcGetList          func(ctx context.Context, filters *model.UserFilters) (upa1 []*model.User, err error)
+	inspectFuncGetList   func(ctx context.Context, filters *model.UserFilters)
 	afterGetListCounter  uint64
 	beforeGetListCounter uint64
 	GetListMock          mUserRepositoryMockGetList
@@ -1061,14 +1061,14 @@ type UserRepositoryMockGetListExpectation struct {
 
 // UserRepositoryMockGetListParams contains parameters of the UserRepository.GetList
 type UserRepositoryMockGetListParams struct {
-	ctx   context.Context
-	names []string
+	ctx     context.Context
+	filters *model.UserFilters
 }
 
 // UserRepositoryMockGetListParamPtrs contains pointers to parameters of the UserRepository.GetList
 type UserRepositoryMockGetListParamPtrs struct {
-	ctx   *context.Context
-	names *[]string
+	ctx     *context.Context
+	filters **model.UserFilters
 }
 
 // UserRepositoryMockGetListResults contains results of the UserRepository.GetList
@@ -1088,7 +1088,7 @@ func (mmGetList *mUserRepositoryMockGetList) Optional() *mUserRepositoryMockGetL
 }
 
 // Expect sets up expected params for UserRepository.GetList
-func (mmGetList *mUserRepositoryMockGetList) Expect(ctx context.Context, names []string) *mUserRepositoryMockGetList {
+func (mmGetList *mUserRepositoryMockGetList) Expect(ctx context.Context, filters *model.UserFilters) *mUserRepositoryMockGetList {
 	if mmGetList.mock.funcGetList != nil {
 		mmGetList.mock.t.Fatalf("UserRepositoryMock.GetList mock is already set by Set")
 	}
@@ -1101,7 +1101,7 @@ func (mmGetList *mUserRepositoryMockGetList) Expect(ctx context.Context, names [
 		mmGetList.mock.t.Fatalf("UserRepositoryMock.GetList mock is already set by ExpectParams functions")
 	}
 
-	mmGetList.defaultExpectation.params = &UserRepositoryMockGetListParams{ctx, names}
+	mmGetList.defaultExpectation.params = &UserRepositoryMockGetListParams{ctx, filters}
 	for _, e := range mmGetList.expectations {
 		if minimock.Equal(e.params, mmGetList.defaultExpectation.params) {
 			mmGetList.mock.t.Fatalf("Expectation set by When has same params: %#v", *mmGetList.defaultExpectation.params)
@@ -1133,8 +1133,8 @@ func (mmGetList *mUserRepositoryMockGetList) ExpectCtxParam1(ctx context.Context
 	return mmGetList
 }
 
-// ExpectNamesParam2 sets up expected param names for UserRepository.GetList
-func (mmGetList *mUserRepositoryMockGetList) ExpectNamesParam2(names []string) *mUserRepositoryMockGetList {
+// ExpectFiltersParam2 sets up expected param filters for UserRepository.GetList
+func (mmGetList *mUserRepositoryMockGetList) ExpectFiltersParam2(filters *model.UserFilters) *mUserRepositoryMockGetList {
 	if mmGetList.mock.funcGetList != nil {
 		mmGetList.mock.t.Fatalf("UserRepositoryMock.GetList mock is already set by Set")
 	}
@@ -1150,13 +1150,13 @@ func (mmGetList *mUserRepositoryMockGetList) ExpectNamesParam2(names []string) *
 	if mmGetList.defaultExpectation.paramPtrs == nil {
 		mmGetList.defaultExpectation.paramPtrs = &UserRepositoryMockGetListParamPtrs{}
 	}
-	mmGetList.defaultExpectation.paramPtrs.names = &names
+	mmGetList.defaultExpectation.paramPtrs.filters = &filters
 
 	return mmGetList
 }
 
 // Inspect accepts an inspector function that has same arguments as the UserRepository.GetList
-func (mmGetList *mUserRepositoryMockGetList) Inspect(f func(ctx context.Context, names []string)) *mUserRepositoryMockGetList {
+func (mmGetList *mUserRepositoryMockGetList) Inspect(f func(ctx context.Context, filters *model.UserFilters)) *mUserRepositoryMockGetList {
 	if mmGetList.mock.inspectFuncGetList != nil {
 		mmGetList.mock.t.Fatalf("Inspect function is already set for UserRepositoryMock.GetList")
 	}
@@ -1180,7 +1180,7 @@ func (mmGetList *mUserRepositoryMockGetList) Return(upa1 []*model.User, err erro
 }
 
 // Set uses given function f to mock the UserRepository.GetList method
-func (mmGetList *mUserRepositoryMockGetList) Set(f func(ctx context.Context, names []string) (upa1 []*model.User, err error)) *UserRepositoryMock {
+func (mmGetList *mUserRepositoryMockGetList) Set(f func(ctx context.Context, filters *model.UserFilters) (upa1 []*model.User, err error)) *UserRepositoryMock {
 	if mmGetList.defaultExpectation != nil {
 		mmGetList.mock.t.Fatalf("Default expectation is already set for the UserRepository.GetList method")
 	}
@@ -1195,14 +1195,14 @@ func (mmGetList *mUserRepositoryMockGetList) Set(f func(ctx context.Context, nam
 
 // When sets expectation for the UserRepository.GetList which will trigger the result defined by the following
 // Then helper
-func (mmGetList *mUserRepositoryMockGetList) When(ctx context.Context, names []string) *UserRepositoryMockGetListExpectation {
+func (mmGetList *mUserRepositoryMockGetList) When(ctx context.Context, filters *model.UserFilters) *UserRepositoryMockGetListExpectation {
 	if mmGetList.mock.funcGetList != nil {
 		mmGetList.mock.t.Fatalf("UserRepositoryMock.GetList mock is already set by Set")
 	}
 
 	expectation := &UserRepositoryMockGetListExpectation{
 		mock:   mmGetList.mock,
-		params: &UserRepositoryMockGetListParams{ctx, names},
+		params: &UserRepositoryMockGetListParams{ctx, filters},
 	}
 	mmGetList.expectations = append(mmGetList.expectations, expectation)
 	return expectation
@@ -1235,15 +1235,15 @@ func (mmGetList *mUserRepositoryMockGetList) invocationsDone() bool {
 }
 
 // GetList implements repository.UserRepository
-func (mmGetList *UserRepositoryMock) GetList(ctx context.Context, names []string) (upa1 []*model.User, err error) {
+func (mmGetList *UserRepositoryMock) GetList(ctx context.Context, filters *model.UserFilters) (upa1 []*model.User, err error) {
 	mm_atomic.AddUint64(&mmGetList.beforeGetListCounter, 1)
 	defer mm_atomic.AddUint64(&mmGetList.afterGetListCounter, 1)
 
 	if mmGetList.inspectFuncGetList != nil {
-		mmGetList.inspectFuncGetList(ctx, names)
+		mmGetList.inspectFuncGetList(ctx, filters)
 	}
 
-	mm_params := UserRepositoryMockGetListParams{ctx, names}
+	mm_params := UserRepositoryMockGetListParams{ctx, filters}
 
 	// Record call args
 	mmGetList.GetListMock.mutex.Lock()
@@ -1262,7 +1262,7 @@ func (mmGetList *UserRepositoryMock) GetList(ctx context.Context, names []string
 		mm_want := mmGetList.GetListMock.defaultExpectation.params
 		mm_want_ptrs := mmGetList.GetListMock.defaultExpectation.paramPtrs
 
-		mm_got := UserRepositoryMockGetListParams{ctx, names}
+		mm_got := UserRepositoryMockGetListParams{ctx, filters}
 
 		if mm_want_ptrs != nil {
 
@@ -1270,8 +1270,8 @@ func (mmGetList *UserRepositoryMock) GetList(ctx context.Context, names []string
 				mmGetList.t.Errorf("UserRepositoryMock.GetList got unexpected parameter ctx, want: %#v, got: %#v%s\n", *mm_want_ptrs.ctx, mm_got.ctx, minimock.Diff(*mm_want_ptrs.ctx, mm_got.ctx))
 			}
 
-			if mm_want_ptrs.names != nil && !minimock.Equal(*mm_want_ptrs.names, mm_got.names) {
-				mmGetList.t.Errorf("UserRepositoryMock.GetList got unexpected parameter names, want: %#v, got: %#v%s\n", *mm_want_ptrs.names, mm_got.names, minimock.Diff(*mm_want_ptrs.names, mm_got.names))
+			if mm_want_ptrs.filters != nil && !minimock.Equal(*mm_want_ptrs.filters, mm_got.filters) {
+				mmGetList.t.Errorf("UserRepositoryMock.GetList got unexpected parameter filters, want: %#v, got: %#v%s\n", *mm_want_ptrs.filters, mm_got.filters, minimock.Diff(*mm_want_ptrs.filters, mm_got.filters))
 			}
 
 		} else if mm_want != nil && !minimock.Equal(*mm_want, mm_got) {
@@ -1285,9 +1285,9 @@ func (mmGetList *UserRepositoryMock) GetList(ctx context.Context, names []string
 		return (*mm_results).upa1, (*mm_results).err
 	}
 	if mmGetList.funcGetList != nil {
-		return mmGetList.funcGetList(ctx, names)
+		return mmGetList.funcGetList(ctx, filters)
 	}
-	mmGetList.t.Fatalf("Unexpected call to UserRepositoryMock.GetList. %v %v", ctx, names)
+	mmGetList.t.Fatalf("Unexpected call to UserRepositoryMock.GetList. %v %v", ctx, filters)
 	return
 }
 

@@ -11,3 +11,8 @@ type User struct {
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
 }
+
+// Filters is a collection of AND filters that may be used to query users
+type Filters struct {
+	Names []string `json:"names"`
+}

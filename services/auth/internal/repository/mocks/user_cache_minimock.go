@@ -18,6 +18,12 @@ type UserCacheMock struct {
 	t          minimock.Tester
 	finishOnce sync.Once
 
+	funcDelete          func(ctx context.Context, id int64) (err error)
+	inspectFuncDelete   func(ctx context.Context, id int64)
+	afterDeleteCounter  uint64
+	beforeDeleteCounter uint64
+	DeleteMock          mUserCacheMockDelete
+
 	funcExpire          func(ctx context.Context, id int64, timeout time.Duration) (err error)
 	inspectFuncExpire   func(ctx context.Context, id int64, timeout time.Duration)
 	afterExpireCounter  uint64
@@ -45,6 +51,9 @@ func NewUserCacheMock(t minimock.Tester) *UserCacheMock {
 		controller.RegisterMocker(m)
 	}
 
+	m.DeleteMock = mUserCacheMockDelete{mock: m}
+	m.DeleteMock.callArgs = []*UserCacheMockDeleteParams{}
+
 	m.ExpireMock = mUserCacheMockExpire{mock: m}
 	m.ExpireMock.callArgs = []*UserCacheMockExpireParams{}
 
@@ -57,6 +66,326 @@ func NewUserCacheMock(t minimock.Tester) *UserCacheMock {
 	t.Cleanup(m.MinimockFinish)
 
 	return m
+}
+
+type mUserCacheMockDelete struct {
+	optional           bool
+	mock               *UserCacheMock
+	defaultExpectation *UserCacheMockDeleteExpectation
+	expectations       []*UserCacheMockDeleteExpectation
+
+	callArgs []*UserCacheMockDeleteParams
+	mutex    sync.RWMutex
+
+	expectedInvocations uint64
+}
+
+// UserCacheMockDeleteExpectation specifies expectation struct of the UserCache.Delete
+type UserCacheMockDeleteExpectation struct {
+	mock      *UserCacheMock
+	params    *UserCacheMockDeleteParams
+	paramPtrs *UserCacheMockDeleteParamPtrs
+	results   *UserCacheMockDeleteResults
+	Counter   uint64
+}
+
+// UserCacheMockDeleteParams contains parameters of the UserCache.Delete
+type UserCacheMockDeleteParams struct {
+	ctx context.Context
+	id  int64
+}
+
+// UserCacheMockDeleteParamPtrs contains pointers to parameters of the UserCache.Delete
+type UserCacheMockDeleteParamPtrs struct {
+	ctx *context.Context
+	id  *int64
+}
+
+// UserCacheMockDeleteResults contains results of the UserCache.Delete
+type UserCacheMockDeleteResults struct {
+	err error
+}
+
+// Marks this method to be optional. The default behavior of any method with Return() is '1 or more', meaning
+// the test will fail minimock's automatic final call check if the mocked method was not called at least once.
+// Optional() makes method check to work in '0 or more' mode.
+// It is NOT RECOMMENDED to use this option by default unless you really need it, as it helps to
+// catch the problems when the expected method call is totally skipped during test run.
+func (mmDelete *mUserCacheMockDelete) Optional() *mUserCacheMockDelete {
+	mmDelete.optional = true
+	return mmDelete
+}
+
+// Expect sets up expected params for UserCache.Delete
+func (mmDelete *mUserCacheMockDelete) Expect(ctx context.Context, id int64) *mUserCacheMockDelete {
+	if mmDelete.mock.funcDelete != nil {
+		mmDelete.mock.t.Fatalf("UserCacheMock.Delete mock is already set by Set")
+	}
+
+	if mmDelete.defaultExpectation == nil {
+		mmDelete.defaultExpectation = &UserCacheMockDeleteExpectation{}
+	}
+
+	if mmDelete.defaultExpectation.paramPtrs != nil {
+		mmDelete.mock.t.Fatalf("UserCacheMock.Delete mock is already set by ExpectParams functions")
+	}
+
+	mmDelete.defaultExpectation.params = &UserCacheMockDeleteParams{ctx, id}
+	for _, e := range mmDelete.expectations {
+		if minimock.Equal(e.params, mmDelete.defaultExpectation.params) {
+			mmDelete.mock.t.Fatalf("Expectation set by When has same params: %#v", *mmDelete.defaultExpectation.params)
+		}
+	}
+
+	return mmDelete
+}
+
+// ExpectCtxParam1 sets up expected param ctx for UserCache.Delete
+func (mmDelete *mUserCacheMockDelete) ExpectCtxParam1(ctx context.Context) *mUserCacheMockDelete {
+	if mmDelete.mock.funcDelete != nil {
+		mmDelete.mock.t.Fatalf("UserCacheMock.Delete mock is already set by Set")
+	}
+
+	if mmDelete.defaultExpectation == nil {
+		mmDelete.defaultExpectation = &UserCacheMockDeleteExpectation{}
+	}
+
+	if mmDelete.defaultExpectation.params != nil {
+		mmDelete.mock.t.Fatalf("UserCacheMock.Delete mock is already set by Expect")
+	}
+
+	if mmDelete.defaultExpectation.paramPtrs == nil {
+		mmDelete.defaultExpectation.paramPtrs = &UserCacheMockDeleteParamPtrs{}
+	}
+	mmDelete.defaultExpectation.paramPtrs.ctx = &ctx
+
+	return mmDelete
+}
+
+// ExpectIdParam2 sets up expected param id for UserCache.Delete
+func (mmDelete *mUserCacheMockDelete) ExpectIdParam2(id int64) *mUserCacheMockDelete {
+	if mmDelete.mock.funcDelete != nil {
+		mmDelete.mock.t.Fatalf("UserCacheMock.Delete mock is already set by Set")
+	}
+
+	if mmDelete.defaultExpectation == nil {
+		mmDelete.defaultExpectation = &UserCacheMockDeleteExpectation{}
+	}
+
+	if mmDelete.defaultExpectation.params != nil {
+		mmDelete.mock.t.Fatalf("UserCacheMock.Delete mock is already set by Expect")
+	}
+
+	if mmDelete.defaultExpectation.paramPtrs == nil {
+		mmDelete.defaultExpectation.paramPtrs = &UserCacheMockDeleteParamPtrs{}
+	}
+	mmDelete.defaultExpectation.paramPtrs.id = &id
+
+	return mmDelete
+}
+
+// Inspect accepts an inspector function that has same arguments as the UserCache.Delete
+func (mmDelete *mUserCacheMockDelete) Inspect(f func(ctx context.Context, id int64)) *mUserCacheMockDelete {
+	if mmDelete.mock.inspectFuncDelete != nil {
+		mmDelete.mock.t.Fatalf("Inspect function is already set for UserCacheMock.Delete")
+	}
+
+	mmDelete.mock.inspectFuncDelete = f
+
+	return mmDelete
+}
+
+// Return sets up results that will be returned by UserCache.Delete
+func (mmDelete *mUserCacheMockDelete) Return(err error) *UserCacheMock {
+	if mmDelete.mock.funcDelete != nil {
+		mmDelete.mock.t.Fatalf("UserCacheMock.Delete mock is already set by Set")
+	}
+
+	if mmDelete.defaultExpectation == nil {
+		mmDelete.defaultExpectation = &UserCacheMockDeleteExpectation{mock: mmDelete.mock}
+	}
+	mmDelete.defaultExpectation.results = &UserCacheMockDeleteResults{err}
+	return mmDelete.mock
+}
+
+// Set uses given function f to mock the UserCache.Delete method
+func (mmDelete *mUserCacheMockDelete) Set(f func(ctx context.Context, id int64) (err error)) *UserCacheMock {
+	if mmDelete.defaultExpectation != nil {
+		mmDelete.mock.t.Fatalf("Default expectation is already set for the UserCache.Delete method")
+	}
+
+	if len(mmDelete.expectations) > 0 {
+		mmDelete.mock.t.Fatalf("Some expectations are already set for the UserCache.Delete method")
+	}
+
+	mmDelete.mock.funcDelete = f
+	return mmDelete.mock
+}
+
+// When sets expectation for the UserCache.Delete which will trigger the result defined by the following
+// Then helper
+func (mmDelete *mUserCacheMockDelete) When(ctx context.Context, id int64) *UserCacheMockDeleteExpectation {
+	if mmDelete.mock.funcDelete != nil {
+		mmDelete.mock.t.Fatalf("UserCacheMock.Delete mock is already set by Set")
+	}
+
+	expectation := &UserCacheMockDeleteExpectation{
+		mock:   mmDelete.mock,
+		params: &UserCacheMockDeleteParams{ctx, id},
+	}
+	mmDelete.expectations = append(mmDelete.expectations, expectation)
+	return expectation
+}
+
+// Then sets up UserCache.Delete return parameters for the expectation previously defined by the When method
+func (e *UserCacheMockDeleteExpectation) Then(err error) *UserCacheMock {
+	e.results = &UserCacheMockDeleteResults{err}
+	return e.mock
+}
+
+// Times sets number of times UserCache.Delete should be invoked
+func (mmDelete *mUserCacheMockDelete) Times(n uint64) *mUserCacheMockDelete {
+	if n == 0 {
+		mmDelete.mock.t.Fatalf("Times of UserCacheMock.Delete mock can not be zero")
+	}
+	mm_atomic.StoreUint64(&mmDelete.expectedInvocations, n)
+	return mmDelete
+}
+
+func (mmDelete *mUserCacheMockDelete) invocationsDone() bool {
+	if len(mmDelete.expectations) == 0 && mmDelete.defaultExpectation == nil && mmDelete.mock.funcDelete == nil {
+		return true
+	}
+
+	totalInvocations := mm_atomic.LoadUint64(&mmDelete.mock.afterDeleteCounter)
+	expectedInvocations := mm_atomic.LoadUint64(&mmDelete.expectedInvocations)
+
+	return totalInvocations > 0 && (expectedInvocations == 0 || expectedInvocations == totalInvocations)
+}
+
+// Delete implements repository.UserCache
+func (mmDelete *UserCacheMock) Delete(ctx context.Context, id int64) (err error) {
+	mm_atomic.AddUint64(&mmDelete.beforeDeleteCounter, 1)
+	defer mm_atomic.AddUint64(&mmDelete.afterDeleteCounter, 1)
+
+	if mmDelete.inspectFuncDelete != nil {
+		mmDelete.inspectFuncDelete(ctx, id)
+	}
+
+	mm_params := UserCacheMockDeleteParams{ctx, id}
+
+	// Record call args
+	mmDelete.DeleteMock.mutex.Lock()
+	mmDelete.DeleteMock.callArgs = append(mmDelete.DeleteMock.callArgs, &mm_params)
+	mmDelete.DeleteMock.mutex.Unlock()
+
+	for _, e := range mmDelete.DeleteMock.expectations {
+		if minimock.Equal(*e.params, mm_params) {
+			mm_atomic.AddUint64(&e.Counter, 1)
+			return e.results.err
+		}
+	}
+
+	if mmDelete.DeleteMock.defaultExpectation != nil {
+		mm_atomic.AddUint64(&mmDelete.DeleteMock.defaultExpectation.Counter, 1)
+		mm_want := mmDelete.DeleteMock.defaultExpectation.params
+		mm_want_ptrs := mmDelete.DeleteMock.defaultExpectation.paramPtrs
+
+		mm_got := UserCacheMockDeleteParams{ctx, id}
+
+		if mm_want_ptrs != nil {
+
+			if mm_want_ptrs.ctx != nil && !minimock.Equal(*mm_want_ptrs.ctx, mm_got.ctx) {
+				mmDelete.t.Errorf("UserCacheMock.Delete got unexpected parameter ctx, want: %#v, got: %#v%s\n", *mm_want_ptrs.ctx, mm_got.ctx, minimock.Diff(*mm_want_ptrs.ctx, mm_got.ctx))
+			}
+
+			if mm_want_ptrs.id != nil && !minimock.Equal(*mm_want_ptrs.id, mm_got.id) {
+				mmDelete.t.Errorf("UserCacheMock.Delete got unexpected parameter id, want: %#v, got: %#v%s\n", *mm_want_ptrs.id, mm_got.id, minimock.Diff(*mm_want_ptrs.id, mm_got.id))
+			}
+
+		} else if mm_want != nil && !minimock.Equal(*mm_want, mm_got) {
+			mmDelete.t.Errorf("UserCacheMock.Delete got unexpected parameters, want: %#v, got: %#v%s\n", *mm_want, mm_got, minimock.Diff(*mm_want, mm_got))
+		}
+
+		mm_results := mmDelete.DeleteMock.defaultExpectation.results
+		if mm_results == nil {
+			mmDelete.t.Fatal("No results are set for the UserCacheMock.Delete")
+		}
+		return (*mm_results).err
+	}
+	if mmDelete.funcDelete != nil {
+		return mmDelete.funcDelete(ctx, id)
+	}
+	mmDelete.t.Fatalf("Unexpected call to UserCacheMock.Delete. %v %v", ctx, id)
+	return
+}
+
+// DeleteAfterCounter returns a count of finished UserCacheMock.Delete invocations
+func (mmDelete *UserCacheMock) DeleteAfterCounter() uint64 {
+	return mm_atomic.LoadUint64(&mmDelete.afterDeleteCounter)
+}
+
+// DeleteBeforeCounter returns a count of UserCacheMock.Delete invocations
+func (mmDelete *UserCacheMock) DeleteBeforeCounter() uint64 {
+	return mm_atomic.LoadUint64(&mmDelete.beforeDeleteCounter)
+}
+
+// Calls returns a list of arguments used in each call to UserCacheMock.Delete.
+// The list is in the same order as the calls were made (i.e. recent calls have a higher index)
+func (mmDelete *mUserCacheMockDelete) Calls() []*UserCacheMockDeleteParams {
+	mmDelete.mutex.RLock()
+
+	argCopy := make([]*UserCacheMockDeleteParams, len(mmDelete.callArgs))
+	copy(argCopy, mmDelete.callArgs)
+
+	mmDelete.mutex.RUnlock()
+
+	return argCopy
+}
+
+// MinimockDeleteDone returns true if the count of the Delete invocations corresponds
+// the number of defined expectations
+func (m *UserCacheMock) MinimockDeleteDone() bool {
+	if m.DeleteMock.optional {
+		// Optional methods provide '0 or more' call count restriction.
+		return true
+	}
+
+	for _, e := range m.DeleteMock.expectations {
+		if mm_atomic.LoadUint64(&e.Counter) < 1 {
+			return false
+		}
+	}
+
+	return m.DeleteMock.invocationsDone()
+}
+
+// MinimockDeleteInspect logs each unmet expectation
+func (m *UserCacheMock) MinimockDeleteInspect() {
+	for _, e := range m.DeleteMock.expectations {
+		if mm_atomic.LoadUint64(&e.Counter) < 1 {
+			m.t.Errorf("Expected call to UserCacheMock.Delete with params: %#v", *e.params)
+		}
+	}
+
+	afterDeleteCounter := mm_atomic.LoadUint64(&m.afterDeleteCounter)
+	// if default expectation was set then invocations count should be greater than zero
+	if m.DeleteMock.defaultExpectation != nil && afterDeleteCounter < 1 {
+		if m.DeleteMock.defaultExpectation.params == nil {
+			m.t.Error("Expected call to UserCacheMock.Delete")
+		} else {
+			m.t.Errorf("Expected call to UserCacheMock.Delete with params: %#v", *m.DeleteMock.defaultExpectation.params)
+		}
+	}
+	// if func was set then invocations count should be greater than zero
+	if m.funcDelete != nil && afterDeleteCounter < 1 {
+		m.t.Error("Expected call to UserCacheMock.Delete")
+	}
+
+	if !m.DeleteMock.invocationsDone() && afterDeleteCounter > 0 {
+		m.t.Errorf("Expected %d calls to UserCacheMock.Delete but found %d calls",
+			mm_atomic.LoadUint64(&m.DeleteMock.expectedInvocations), afterDeleteCounter)
+	}
 }
 
 type mUserCacheMockExpire struct {
@@ -1052,6 +1381,8 @@ func (m *UserCacheMock) MinimockSetInspect() {
 func (m *UserCacheMock) MinimockFinish() {
 	m.finishOnce.Do(func() {
 		if !m.minimockDone() {
+			m.MinimockDeleteInspect()
+
 			m.MinimockExpireInspect()
 
 			m.MinimockGetInspect()
@@ -1081,6 +1412,7 @@ func (m *UserCacheMock) MinimockWait(timeout mm_time.Duration) {
 func (m *UserCacheMock) minimockDone() bool {
 	done := true
 	return done &&
+		m.MinimockDeleteDone() &&
 		m.MinimockExpireDone() &&
 		m.MinimockGetDone() &&
 		m.MinimockSetDone()

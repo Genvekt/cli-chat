@@ -35,8 +35,8 @@ type UserServiceMock struct {
 	beforeGetCounter uint64
 	GetMock          mUserServiceMockGet
 
-	funcGetList          func(ctx context.Context, names []string) (upa1 []*model.User, err error)
-	inspectFuncGetList   func(ctx context.Context, names []string)
+	funcGetList          func(ctx context.Context, filters *model.UserFilters) (upa1 []*model.User, err error)
+	inspectFuncGetList   func(ctx context.Context, filters *model.UserFilters)
 	afterGetListCounter  uint64
 	beforeGetListCounter uint64
 	GetListMock          mUserServiceMockGetList
@@ -1061,14 +1061,14 @@ type UserServiceMockGetListExpectation struct {
 
 // UserServiceMockGetListParams contains parameters of the UserService.GetList
 type UserServiceMockGetListParams struct {
-	ctx   context.Context
-	names []string
+	ctx     context.Context
+	filters *model.UserFilters
 }
 
 // UserServiceMockGetListParamPtrs contains pointers to parameters of the UserService.GetList
 type UserServiceMockGetListParamPtrs struct {
-	ctx   *context.Context
-	names *[]string
+	ctx     *context.Context
+	filters **model.UserFilters
 }
 
 // UserServiceMockGetListResults contains results of the UserService.GetList
@@ -1088,7 +1088,7 @@ func (mmGetList *mUserServiceMockGetList) Optional() *mUserServiceMockGetList {
 }
 
 // Expect sets up expected params for UserService.GetList
-func (mmGetList *mUserServiceMockGetList) Expect(ctx context.Context, names []string) *mUserServiceMockGetList {
+func (mmGetList *mUserServiceMockGetList) Expect(ctx context.Context, filters *model.UserFilters) *mUserServiceMockGetList {
 	if mmGetList.mock.funcGetList != nil {
 		mmGetList.mock.t.Fatalf("UserServiceMock.GetList mock is already set by Set")
 	}
@@ -1101,7 +1101,7 @@ func (mmGetList *mUserServiceMockGetList) Expect(ctx context.Context, names []st
 		mmGetList.mock.t.Fatalf("UserServiceMock.GetList mock is already set by ExpectParams functions")
 	}
 
-	mmGetList.defaultExpectation.params = &UserServiceMockGetListParams{ctx, names}
+	mmGetList.defaultExpectation.params = &UserServiceMockGetListParams{ctx, filters}
 	for _, e := range mmGetList.expectations {
 		if minimock.Equal(e.params, mmGetList.defaultExpectation.params) {
 			mmGetList.mock.t.Fatalf("Expectation set by When has same params: %#v", *mmGetList.defaultExpectation.params)
@@ -1133,8 +1133,8 @@ func (mmGetList *mUserServiceMockGetList) ExpectCtxParam1(ctx context.Context) *
 	return mmGetList
 }
 
-// ExpectNamesParam2 sets up expected param names for UserService.GetList
-func (mmGetList *mUserServiceMockGetList) ExpectNamesParam2(names []string) *mUserServiceMockGetList {
+// ExpectFiltersParam2 sets up expected param filters for UserService.GetList
+func (mmGetList *mUserServiceMockGetList) ExpectFiltersParam2(filters *model.UserFilters) *mUserServiceMockGetList {
 	if mmGetList.mock.funcGetList != nil {
 		mmGetList.mock.t.Fatalf("UserServiceMock.GetList mock is already set by Set")
 	}
@@ -1150,13 +1150,13 @@ func (mmGetList *mUserServiceMockGetList) ExpectNamesParam2(names []string) *mUs
 	if mmGetList.defaultExpectation.paramPtrs == nil {
 		mmGetList.defaultExpectation.paramPtrs = &UserServiceMockGetListParamPtrs{}
 	}
-	mmGetList.defaultExpectation.paramPtrs.names = &names
+	mmGetList.defaultExpectation.paramPtrs.filters = &filters
 
 	return mmGetList
 }
 
 // Inspect accepts an inspector function that has same arguments as the UserService.GetList
-func (mmGetList *mUserServiceMockGetList) Inspect(f func(ctx context.Context, names []string)) *mUserServiceMockGetList {
+func (mmGetList *mUserServiceMockGetList) Inspect(f func(ctx context.Context, filters *model.UserFilters)) *mUserServiceMockGetList {
 	if mmGetList.mock.inspectFuncGetList != nil {
 		mmGetList.mock.t.Fatalf("Inspect function is already set for UserServiceMock.GetList")
 	}
@@ -1180,7 +1180,7 @@ func (mmGetList *mUserServiceMockGetList) Return(upa1 []*model.User, err error) 
 }
 
 // Set uses given function f to mock the UserService.GetList method
-func (mmGetList *mUserServiceMockGetList) Set(f func(ctx context.Context, names []string) (upa1 []*model.User, err error)) *UserServiceMock {
+func (mmGetList *mUserServiceMockGetList) Set(f func(ctx context.Context, filters *model.UserFilters) (upa1 []*model.User, err error)) *UserServiceMock {
 	if mmGetList.defaultExpectation != nil {
 		mmGetList.mock.t.Fatalf("Default expectation is already set for the UserService.GetList method")
 	}
@@ -1195,14 +1195,14 @@ func (mmGetList *mUserServiceMockGetList) Set(f func(ctx context.Context, names 
 
 // When sets expectation for the UserService.GetList which will trigger the result defined by the following
 // Then helper
-func (mmGetList *mUserServiceMockGetList) When(ctx context.Context, names []string) *UserServiceMockGetListExpectation {
+func (mmGetList *mUserServiceMockGetList) When(ctx context.Context, filters *model.UserFilters) *UserServiceMockGetListExpectation {
 	if mmGetList.mock.funcGetList != nil {
 		mmGetList.mock.t.Fatalf("UserServiceMock.GetList mock is already set by Set")
 	}
 
 	expectation := &UserServiceMockGetListExpectation{
 		mock:   mmGetList.mock,
-		params: &UserServiceMockGetListParams{ctx, names},
+		params: &UserServiceMockGetListParams{ctx, filters},
 	}
 	mmGetList.expectations = append(mmGetList.expectations, expectation)
 	return expectation
@@ -1235,15 +1235,15 @@ func (mmGetList *mUserServiceMockGetList) invocationsDone() bool {
 }
 
 // GetList implements service.UserService
-func (mmGetList *UserServiceMock) GetList(ctx context.Context, names []string) (upa1 []*model.User, err error) {
+func (mmGetList *UserServiceMock) GetList(ctx context.Context, filters *model.UserFilters) (upa1 []*model.User, err error) {
 	mm_atomic.AddUint64(&mmGetList.beforeGetListCounter, 1)
 	defer mm_atomic.AddUint64(&mmGetList.afterGetListCounter, 1)
 
 	if mmGetList.inspectFuncGetList != nil {
-		mmGetList.inspectFuncGetList(ctx, names)
+		mmGetList.inspectFuncGetList(ctx, filters)
 	}
 
-	mm_params := UserServiceMockGetListParams{ctx, names}
+	mm_params := UserServiceMockGetListParams{ctx, filters}
 
 	// Record call args
 	mmGetList.GetListMock.mutex.Lock()
@@ -1262,7 +1262,7 @@ func (mmGetList *UserServiceMock) GetList(ctx context.Context, names []string) (
 		mm_want := mmGetList.GetListMock.defaultExpectation.params
 		mm_want_ptrs := mmGetList.GetListMock.defaultExpectation.paramPtrs
 
-		mm_got := UserServiceMockGetListParams{ctx, names}
+		mm_got := UserServiceMockGetListParams{ctx, filters}
 
 		if mm_want_ptrs != nil {
 
@@ -1270,8 +1270,8 @@ func (mmGetList *UserServiceMock) GetList(ctx context.Context, names []string) (
 				mmGetList.t.Errorf("UserServiceMock.GetList got unexpected parameter ctx, want: %#v, got: %#v%s\n", *mm_want_ptrs.ctx, mm_got.ctx, minimock.Diff(*mm_want_ptrs.ctx, mm_got.ctx))
 			}
 
-			if mm_want_ptrs.names != nil && !minimock.Equal(*mm_want_ptrs.names, mm_got.names) {
-				mmGetList.t.Errorf("UserServiceMock.GetList got unexpected parameter names, want: %#v, got: %#v%s\n", *mm_want_ptrs.names, mm_got.names, minimock.Diff(*mm_want_ptrs.names, mm_got.names))
+			if mm_want_ptrs.filters != nil && !minimock.Equal(*mm_want_ptrs.filters, mm_got.filters) {
+				mmGetList.t.Errorf("UserServiceMock.GetList got unexpected parameter filters, want: %#v, got: %#v%s\n", *mm_want_ptrs.filters, mm_got.filters, minimock.Diff(*mm_want_ptrs.filters, mm_got.filters))
 			}
 
 		} else if mm_want != nil && !minimock.Equal(*mm_want, mm_got) {
@@ -1285,9 +1285,9 @@ func (mmGetList *UserServiceMock) GetList(ctx context.Context, names []string) (
 		return (*mm_results).upa1, (*mm_results).err
 	}
 	if mmGetList.funcGetList != nil {
-		return mmGetList.funcGetList(ctx, names)
+		return mmGetList.funcGetList(ctx, filters)
 	}
-	mmGetList.t.Fatalf("Unexpected call to UserServiceMock.GetList. %v %v", ctx, names)
+	mmGetList.t.Fatalf("Unexpected call to UserServiceMock.GetList. %v %v", ctx, filters)
 	return
 }
 

@@ -21,6 +21,18 @@ type UserServiceConfigMock struct {
 	afterCacheTTLCounter  uint64
 	beforeCacheTTLCounter uint64
 	CacheTTLMock          mUserServiceConfigMockCacheTTL
+
+	funcNoCache          func() (b1 bool)
+	inspectFuncNoCache   func()
+	afterNoCacheCounter  uint64
+	beforeNoCacheCounter uint64
+	NoCacheMock          mUserServiceConfigMockNoCache
+
+	funcUseCache          func() (b1 bool)
+	inspectFuncUseCache   func()
+	afterUseCacheCounter  uint64
+	beforeUseCacheCounter uint64
+	UseCacheMock          mUserServiceConfigMockUseCache
 }
 
 // NewUserServiceConfigMock returns a mock for config.UserServiceConfig
@@ -32,6 +44,10 @@ func NewUserServiceConfigMock(t minimock.Tester) *UserServiceConfigMock {
 	}
 
 	m.CacheTTLMock = mUserServiceConfigMockCacheTTL{mock: m}
+
+	m.NoCacheMock = mUserServiceConfigMockNoCache{mock: m}
+
+	m.UseCacheMock = mUserServiceConfigMockUseCache{mock: m}
 
 	t.Cleanup(m.MinimockFinish)
 
@@ -217,11 +233,373 @@ func (m *UserServiceConfigMock) MinimockCacheTTLInspect() {
 	}
 }
 
+type mUserServiceConfigMockNoCache struct {
+	optional           bool
+	mock               *UserServiceConfigMock
+	defaultExpectation *UserServiceConfigMockNoCacheExpectation
+	expectations       []*UserServiceConfigMockNoCacheExpectation
+
+	expectedInvocations uint64
+}
+
+// UserServiceConfigMockNoCacheExpectation specifies expectation struct of the UserServiceConfig.NoCache
+type UserServiceConfigMockNoCacheExpectation struct {
+	mock *UserServiceConfigMock
+
+	results *UserServiceConfigMockNoCacheResults
+	Counter uint64
+}
+
+// UserServiceConfigMockNoCacheResults contains results of the UserServiceConfig.NoCache
+type UserServiceConfigMockNoCacheResults struct {
+	b1 bool
+}
+
+// Marks this method to be optional. The default behavior of any method with Return() is '1 or more', meaning
+// the test will fail minimock's automatic final call check if the mocked method was not called at least once.
+// Optional() makes method check to work in '0 or more' mode.
+// It is NOT RECOMMENDED to use this option by default unless you really need it, as it helps to
+// catch the problems when the expected method call is totally skipped during test run.
+func (mmNoCache *mUserServiceConfigMockNoCache) Optional() *mUserServiceConfigMockNoCache {
+	mmNoCache.optional = true
+	return mmNoCache
+}
+
+// Expect sets up expected params for UserServiceConfig.NoCache
+func (mmNoCache *mUserServiceConfigMockNoCache) Expect() *mUserServiceConfigMockNoCache {
+	if mmNoCache.mock.funcNoCache != nil {
+		mmNoCache.mock.t.Fatalf("UserServiceConfigMock.NoCache mock is already set by Set")
+	}
+
+	if mmNoCache.defaultExpectation == nil {
+		mmNoCache.defaultExpectation = &UserServiceConfigMockNoCacheExpectation{}
+	}
+
+	return mmNoCache
+}
+
+// Inspect accepts an inspector function that has same arguments as the UserServiceConfig.NoCache
+func (mmNoCache *mUserServiceConfigMockNoCache) Inspect(f func()) *mUserServiceConfigMockNoCache {
+	if mmNoCache.mock.inspectFuncNoCache != nil {
+		mmNoCache.mock.t.Fatalf("Inspect function is already set for UserServiceConfigMock.NoCache")
+	}
+
+	mmNoCache.mock.inspectFuncNoCache = f
+
+	return mmNoCache
+}
+
+// Return sets up results that will be returned by UserServiceConfig.NoCache
+func (mmNoCache *mUserServiceConfigMockNoCache) Return(b1 bool) *UserServiceConfigMock {
+	if mmNoCache.mock.funcNoCache != nil {
+		mmNoCache.mock.t.Fatalf("UserServiceConfigMock.NoCache mock is already set by Set")
+	}
+
+	if mmNoCache.defaultExpectation == nil {
+		mmNoCache.defaultExpectation = &UserServiceConfigMockNoCacheExpectation{mock: mmNoCache.mock}
+	}
+	mmNoCache.defaultExpectation.results = &UserServiceConfigMockNoCacheResults{b1}
+	return mmNoCache.mock
+}
+
+// Set uses given function f to mock the UserServiceConfig.NoCache method
+func (mmNoCache *mUserServiceConfigMockNoCache) Set(f func() (b1 bool)) *UserServiceConfigMock {
+	if mmNoCache.defaultExpectation != nil {
+		mmNoCache.mock.t.Fatalf("Default expectation is already set for the UserServiceConfig.NoCache method")
+	}
+
+	if len(mmNoCache.expectations) > 0 {
+		mmNoCache.mock.t.Fatalf("Some expectations are already set for the UserServiceConfig.NoCache method")
+	}
+
+	mmNoCache.mock.funcNoCache = f
+	return mmNoCache.mock
+}
+
+// Times sets number of times UserServiceConfig.NoCache should be invoked
+func (mmNoCache *mUserServiceConfigMockNoCache) Times(n uint64) *mUserServiceConfigMockNoCache {
+	if n == 0 {
+		mmNoCache.mock.t.Fatalf("Times of UserServiceConfigMock.NoCache mock can not be zero")
+	}
+	mm_atomic.StoreUint64(&mmNoCache.expectedInvocations, n)
+	return mmNoCache
+}
+
+func (mmNoCache *mUserServiceConfigMockNoCache) invocationsDone() bool {
+	if len(mmNoCache.expectations) == 0 && mmNoCache.defaultExpectation == nil && mmNoCache.mock.funcNoCache == nil {
+		return true
+	}
+
+	totalInvocations := mm_atomic.LoadUint64(&mmNoCache.mock.afterNoCacheCounter)
+	expectedInvocations := mm_atomic.LoadUint64(&mmNoCache.expectedInvocations)
+
+	return totalInvocations > 0 && (expectedInvocations == 0 || expectedInvocations == totalInvocations)
+}
+
+// NoCache implements config.UserServiceConfig
+func (mmNoCache *UserServiceConfigMock) NoCache() (b1 bool) {
+	mm_atomic.AddUint64(&mmNoCache.beforeNoCacheCounter, 1)
+	defer mm_atomic.AddUint64(&mmNoCache.afterNoCacheCounter, 1)
+
+	if mmNoCache.inspectFuncNoCache != nil {
+		mmNoCache.inspectFuncNoCache()
+	}
+
+	if mmNoCache.NoCacheMock.defaultExpectation != nil {
+		mm_atomic.AddUint64(&mmNoCache.NoCacheMock.defaultExpectation.Counter, 1)
+
+		mm_results := mmNoCache.NoCacheMock.defaultExpectation.results
+		if mm_results == nil {
+			mmNoCache.t.Fatal("No results are set for the UserServiceConfigMock.NoCache")
+		}
+		return (*mm_results).b1
+	}
+	if mmNoCache.funcNoCache != nil {
+		return mmNoCache.funcNoCache()
+	}
+	mmNoCache.t.Fatalf("Unexpected call to UserServiceConfigMock.NoCache.")
+	return
+}
+
+// NoCacheAfterCounter returns a count of finished UserServiceConfigMock.NoCache invocations
+func (mmNoCache *UserServiceConfigMock) NoCacheAfterCounter() uint64 {
+	return mm_atomic.LoadUint64(&mmNoCache.afterNoCacheCounter)
+}
+
+// NoCacheBeforeCounter returns a count of UserServiceConfigMock.NoCache invocations
+func (mmNoCache *UserServiceConfigMock) NoCacheBeforeCounter() uint64 {
+	return mm_atomic.LoadUint64(&mmNoCache.beforeNoCacheCounter)
+}
+
+// MinimockNoCacheDone returns true if the count of the NoCache invocations corresponds
+// the number of defined expectations
+func (m *UserServiceConfigMock) MinimockNoCacheDone() bool {
+	if m.NoCacheMock.optional {
+		// Optional methods provide '0 or more' call count restriction.
+		return true
+	}
+
+	for _, e := range m.NoCacheMock.expectations {
+		if mm_atomic.LoadUint64(&e.Counter) < 1 {
+			return false
+		}
+	}
+
+	return m.NoCacheMock.invocationsDone()
+}
+
+// MinimockNoCacheInspect logs each unmet expectation
+func (m *UserServiceConfigMock) MinimockNoCacheInspect() {
+	for _, e := range m.NoCacheMock.expectations {
+		if mm_atomic.LoadUint64(&e.Counter) < 1 {
+			m.t.Error("Expected call to UserServiceConfigMock.NoCache")
+		}
+	}
+
+	afterNoCacheCounter := mm_atomic.LoadUint64(&m.afterNoCacheCounter)
+	// if default expectation was set then invocations count should be greater than zero
+	if m.NoCacheMock.defaultExpectation != nil && afterNoCacheCounter < 1 {
+		m.t.Error("Expected call to UserServiceConfigMock.NoCache")
+	}
+	// if func was set then invocations count should be greater than zero
+	if m.funcNoCache != nil && afterNoCacheCounter < 1 {
+		m.t.Error("Expected call to UserServiceConfigMock.NoCache")
+	}
+
+	if !m.NoCacheMock.invocationsDone() && afterNoCacheCounter > 0 {
+		m.t.Errorf("Expected %d calls to UserServiceConfigMock.NoCache but found %d calls",
+			mm_atomic.LoadUint64(&m.NoCacheMock.expectedInvocations), afterNoCacheCounter)
+	}
+}
+
+type mUserServiceConfigMockUseCache struct {
+	optional           bool
+	mock               *UserServiceConfigMock
+	defaultExpectation *UserServiceConfigMockUseCacheExpectation
+	expectations       []*UserServiceConfigMockUseCacheExpectation
+
+	expectedInvocations uint64
+}
+
+// UserServiceConfigMockUseCacheExpectation specifies expectation struct of the UserServiceConfig.UseCache
+type UserServiceConfigMockUseCacheExpectation struct {
+	mock *UserServiceConfigMock
+
+	results *UserServiceConfigMockUseCacheResults
+	Counter uint64
+}
+
+// UserServiceConfigMockUseCacheResults contains results of the UserServiceConfig.UseCache
+type UserServiceConfigMockUseCacheResults struct {
+	b1 bool
+}
+
+// Marks this method to be optional. The default behavior of any method with Return() is '1 or more', meaning
+// the test will fail minimock's automatic final call check if the mocked method was not called at least once.
+// Optional() makes method check to work in '0 or more' mode.
+// It is NOT RECOMMENDED to use this option by default unless you really need it, as it helps to
+// catch the problems when the expected method call is totally skipped during test run.
+func (mmUseCache *mUserServiceConfigMockUseCache) Optional() *mUserServiceConfigMockUseCache {
+	mmUseCache.optional = true
+	return mmUseCache
+}
+
+// Expect sets up expected params for UserServiceConfig.UseCache
+func (mmUseCache *mUserServiceConfigMockUseCache) Expect() *mUserServiceConfigMockUseCache {
+	if mmUseCache.mock.funcUseCache != nil {
+		mmUseCache.mock.t.Fatalf("UserServiceConfigMock.UseCache mock is already set by Set")
+	}
+
+	if mmUseCache.defaultExpectation == nil {
+		mmUseCache.defaultExpectation = &UserServiceConfigMockUseCacheExpectation{}
+	}
+
+	return mmUseCache
+}
+
+// Inspect accepts an inspector function that has same arguments as the UserServiceConfig.UseCache
+func (mmUseCache *mUserServiceConfigMockUseCache) Inspect(f func()) *mUserServiceConfigMockUseCache {
+	if mmUseCache.mock.inspectFuncUseCache != nil {
+		mmUseCache.mock.t.Fatalf("Inspect function is already set for UserServiceConfigMock.UseCache")
+	}
+
+	mmUseCache.mock.inspectFuncUseCache = f
+
+	return mmUseCache
+}
+
+// Return sets up results that will be returned by UserServiceConfig.UseCache
+func (mmUseCache *mUserServiceConfigMockUseCache) Return(b1 bool) *UserServiceConfigMock {
+	if mmUseCache.mock.funcUseCache != nil {
+		mmUseCache.mock.t.Fatalf("UserServiceConfigMock.UseCache mock is already set by Set")
+	}
+
+	if mmUseCache.defaultExpectation == nil {
+		mmUseCache.defaultExpectation = &UserServiceConfigMockUseCacheExpectation{mock: mmUseCache.mock}
+	}
+	mmUseCache.defaultExpectation.results = &UserServiceConfigMockUseCacheResults{b1}
+	return mmUseCache.mock
+}
+
+// Set uses given function f to mock the UserServiceConfig.UseCache method
+func (mmUseCache *mUserServiceConfigMockUseCache) Set(f func() (b1 bool)) *UserServiceConfigMock {
+	if mmUseCache.defaultExpectation != nil {
+		mmUseCache.mock.t.Fatalf("Default expectation is already set for the UserServiceConfig.UseCache method")
+	}
+
+	if len(mmUseCache.expectations) > 0 {
+		mmUseCache.mock.t.Fatalf("Some expectations are already set for the UserServiceConfig.UseCache method")
+	}
+
+	mmUseCache.mock.funcUseCache = f
+	return mmUseCache.mock
+}
+
+// Times sets number of times UserServiceConfig.UseCache should be invoked
+func (mmUseCache *mUserServiceConfigMockUseCache) Times(n uint64) *mUserServiceConfigMockUseCache {
+	if n == 0 {
+		mmUseCache.mock.t.Fatalf("Times of UserServiceConfigMock.UseCache mock can not be zero")
+	}
+	mm_atomic.StoreUint64(&mmUseCache.expectedInvocations, n)
+	return mmUseCache
+}
+
+func (mmUseCache *mUserServiceConfigMockUseCache) invocationsDone() bool {
+	if len(mmUseCache.expectations) == 0 && mmUseCache.defaultExpectation == nil && mmUseCache.mock.funcUseCache == nil {
+		return true
+	}
+
+	totalInvocations := mm_atomic.LoadUint64(&mmUseCache.mock.afterUseCacheCounter)
+	expectedInvocations := mm_atomic.LoadUint64(&mmUseCache.expectedInvocations)
+
+	return totalInvocations > 0 && (expectedInvocations == 0 || expectedInvocations == totalInvocations)
+}
+
+// UseCache implements config.UserServiceConfig
+func (mmUseCache *UserServiceConfigMock) UseCache() (b1 bool) {
+	mm_atomic.AddUint64(&mmUseCache.beforeUseCacheCounter, 1)
+	defer mm_atomic.AddUint64(&mmUseCache.afterUseCacheCounter, 1)
+
+	if mmUseCache.inspectFuncUseCache != nil {
+		mmUseCache.inspectFuncUseCache()
+	}
+
+	if mmUseCache.UseCacheMock.defaultExpectation != nil {
+		mm_atomic.AddUint64(&mmUseCache.UseCacheMock.defaultExpectation.Counter, 1)
+
+		mm_results := mmUseCache.UseCacheMock.defaultExpectation.results
+		if mm_results == nil {
+			mmUseCache.t.Fatal("No results are set for the UserServiceConfigMock.UseCache")
+		}
+		return (*mm_results).b1
+	}
+	if mmUseCache.funcUseCache != nil {
+		return mmUseCache.funcUseCache()
+	}
+	mmUseCache.t.Fatalf("Unexpected call to UserServiceConfigMock.UseCache.")
+	return
+}
+
+// UseCacheAfterCounter returns a count of finished UserServiceConfigMock.UseCache invocations
+func (mmUseCache *UserServiceConfigMock) UseCacheAfterCounter() uint64 {
+	return mm_atomic.LoadUint64(&mmUseCache.afterUseCacheCounter)
+}
+
+// UseCacheBeforeCounter returns a count of UserServiceConfigMock.UseCache invocations
+func (mmUseCache *UserServiceConfigMock) UseCacheBeforeCounter() uint64 {
+	return mm_atomic.LoadUint64(&mmUseCache.beforeUseCacheCounter)
+}
+
+// MinimockUseCacheDone returns true if the count of the UseCache invocations corresponds
+// the number of defined expectations
+func (m *UserServiceConfigMock) MinimockUseCacheDone() bool {
+	if m.UseCacheMock.optional {
+		// Optional methods provide '0 or more' call count restriction.
+		return true
+	}
+
+	for _, e := range m.UseCacheMock.expectations {
+		if mm_atomic.LoadUint64(&e.Counter) < 1 {
+			return false
+		}
+	}
+
+	return m.UseCacheMock.invocationsDone()
+}
+
+// MinimockUseCacheInspect logs each unmet expectation
+func (m *UserServiceConfigMock) MinimockUseCacheInspect() {
+	for _, e := range m.UseCacheMock.expectations {
+		if mm_atomic.LoadUint64(&e.Counter) < 1 {
+			m.t.Error("Expected call to UserServiceConfigMock.UseCache")
+		}
+	}
+
+	afterUseCacheCounter := mm_atomic.LoadUint64(&m.afterUseCacheCounter)
+	// if default expectation was set then invocations count should be greater than zero
+	if m.UseCacheMock.defaultExpectation != nil && afterUseCacheCounter < 1 {
+		m.t.Error("Expected call to UserServiceConfigMock.UseCache")
+	}
+	// if func was set then invocations count should be greater than zero
+	if m.funcUseCache != nil && afterUseCacheCounter < 1 {
+		m.t.Error("Expected call to UserServiceConfigMock.UseCache")
+	}
+
+	if !m.UseCacheMock.invocationsDone() && afterUseCacheCounter > 0 {
+		m.t.Errorf("Expected %d calls to UserServiceConfigMock.UseCache but found %d calls",
+			mm_atomic.LoadUint64(&m.UseCacheMock.expectedInvocations), afterUseCacheCounter)
+	}
+}
+
 // MinimockFinish checks that all mocked methods have been called the expected number of times
 func (m *UserServiceConfigMock) MinimockFinish() {
 	m.finishOnce.Do(func() {
 		if !m.minimockDone() {
 			m.MinimockCacheTTLInspect()
+
+			m.MinimockNoCacheInspect()
+
+			m.MinimockUseCacheInspect()
 			m.t.FailNow()
 		}
 	})
@@ -246,5 +624,7 @@ func (m *UserServiceConfigMock) MinimockWait(timeout mm_time.Duration) {
 func (m *UserServiceConfigMock) minimockDone() bool {
 	done := true
 	return done &&
-		m.MinimockCacheTTLDone()
+		m.MinimockCacheTTLDone() &&
+		m.MinimockNoCacheDone() &&
+		m.MinimockUseCacheDone()
 }

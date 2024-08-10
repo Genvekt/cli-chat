@@ -57,7 +57,7 @@ func TestCreateWithCache(t *testing.T) {
 		configMockFunc    configMockFunc
 	}{
 		{
-			name: "Success with cache",
+			name: "Success",
 			args: args{
 				ctx: ctx,
 				req: req,

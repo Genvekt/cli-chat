@@ -34,6 +34,13 @@ func ToUserUpdateDTOFromProto(userUpdate *userApi.UpdateRequest) *model.UserUpda
 	return dto
 }
 
+// ToUserFiltersFromProto converts user filters from proto to service model
+func ToUserFiltersFromProto(userFilters *userApi.GetListFilters) *model.UserFilters {
+	return &model.UserFilters{
+		Names: userFilters.GetNames(),
+	}
+}
+
 // ToProtoUsersFromUsers converts slice of user service model to slice of user api model
 func ToProtoUsersFromUsers(users []*model.User) []*userApi.User {
 	protoUsers := make([]*userApi.User, 0, len(users))

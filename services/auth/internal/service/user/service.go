@@ -2,7 +2,6 @@ package user
 
 import (
 	"errors"
-	"reflect"
 
 	"github.com/Genvekt/cli-chat/libraries/db_client/pkg/db"
 	"github.com/Genvekt/cli-chat/services/auth/internal/config"
@@ -38,8 +37,4 @@ func NewUserService(
 		txManager: txManager,
 		config:    config,
 	}
-}
-
-func (s *userService) isCacheUsed() bool {
-	return !(s.userCache == nil || reflect.ValueOf(s.userCache).IsNil())
 }

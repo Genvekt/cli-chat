@@ -23,7 +23,7 @@ func TestGetList(t *testing.T) {
 
 	type args struct {
 		ctx context.Context
-		req []string
+		req *model.UserFilters
 	}
 
 	type userRepoMockFunc func(mc minimock.MockController) *repoMock.UserRepositoryMock
@@ -37,6 +37,10 @@ func TestGetList(t *testing.T) {
 
 		name      = gofakeit.Username()
 		usernames = []string{gofakeit.Username(), name}
+
+		req = &model.UserFilters{
+			Names: usernames,
+		}
 
 		repoErr = fmt.Errorf("repo error")
 
@@ -62,13 +66,13 @@ func TestGetList(t *testing.T) {
 			name: "Success",
 			args: args{
 				ctx: ctx,
-				req: usernames,
+				req: req,
 			},
 			want: res,
 			err:  nil,
 			userRepoMockFunc: func(mc minimock.MockController) *repoMock.UserRepositoryMock {
 				mock := repoMock.NewUserRepositoryMock(mc)
-				mock.GetListMock.Expect(ctx, usernames).Return(res, nil)
+				mock.GetListMock.Expect(ctx, req).Return(res, nil)
 				return mock
 			},
 			userCacheMockFunc: func(_ minimock.MockController) *repoMock.UserCacheMock {
@@ -76,6 +80,7 @@ func TestGetList(t *testing.T) {
 			},
 			configMockFunc: func(mc minimock.MockController) *configMock.UserServiceConfigMock {
 				mock := configMock.NewUserServiceConfigMock(mc)
+				mock.NoCacheMock.Return(true)
 				return mock
 			},
 			txManagerMockFunc: func(mc minimock.MockController) *dbMock.TxManagerMock {
@@ -86,13 +91,13 @@ func TestGetList(t *testing.T) {
 			name: "User repo failure",
 			args: args{
 				ctx: ctx,
-				req: usernames,
+				req: req,
 			},
 			want: nil,
 			err:  repoErr,
 			userRepoMockFunc: func(mc minimock.MockController) *repoMock.UserRepositoryMock {
 				mock := repoMock.NewUserRepositoryMock(mc)
-				mock.GetListMock.Expect(ctx, usernames).Return(nil, repoErr)
+				mock.GetListMock.Expect(ctx, req).Return(nil, repoErr)
 				return mock
 			},
 			userCacheMockFunc: func(_ minimock.MockController) *repoMock.UserCacheMock {

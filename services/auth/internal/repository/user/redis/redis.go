@@ -70,3 +70,12 @@ func (r *userCacheRedis) Expire(ctx context.Context, id int64, timeout time.Dura
 
 	return nil
 }
+
+func (r *userCacheRedis) Delete(ctx context.Context, id int64) error {
+	idStr := strconv.FormatInt(id, 10)
+	err := r.client.Delete(ctx, idStr)
+	if err != nil {
+		return err
+	}
+	return nil
+}

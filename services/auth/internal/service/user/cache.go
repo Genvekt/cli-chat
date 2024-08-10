@@ -8,8 +8,8 @@ import (
 
 // setCache saves user into cache and sets ttl
 func (s *userService) setCache(ctx context.Context, user *model.User) error {
-	if !s.isCacheUsed() {
-		return ErrNoCacheUsed
+	if s.config.NoCache() {
+		return nil
 	}
 
 	err := s.userCache.Set(ctx, user)
@@ -28,7 +28,7 @@ func (s *userService) setCache(ctx context.Context, user *model.User) error {
 
 // getCache retrieves user from cache by id and resets ttl
 func (s *userService) getCache(ctx context.Context, id int64) (*model.User, error) {
-	if !s.isCacheUsed() {
+	if s.config.NoCache() {
 		return nil, ErrNoCacheUsed
 	}
 
@@ -37,7 +37,7 @@ func (s *userService) getCache(ctx context.Context, id int64) (*model.User, erro
 		return nil, err
 	}
 
-	// Reset timeout for user as it was recently retrieved
+	// Reset timeout for user as it was recently retrieved and may be retrieved once more
 	err = s.userCache.Expire(ctx, id, s.config.CacheTTL())
 	if err != nil {
 		return nil, err
@@ -48,11 +48,11 @@ func (s *userService) getCache(ctx context.Context, id int64) (*model.User, erro
 
 // deleteCache removes user from cache
 func (s *userService) deleteCache(ctx context.Context, id int64) error {
-	if !s.isCacheUsed() {
-		return ErrNoCacheUsed
+	if s.config.NoCache() {
+		return nil
 	}
 
-	err := s.userCache.Expire(ctx, id, 0)
+	err := s.userCache.Delete(ctx, id)
 	if err != nil {
 		return err
 	}

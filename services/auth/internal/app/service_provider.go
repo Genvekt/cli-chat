@@ -183,9 +183,13 @@ func (s *ServiceProvider) UserServiceConfig() config.UserServiceConfig {
 // UserService initialises user service layer
 func (s *ServiceProvider) UserService(ctx context.Context) service.UserService {
 	if s.userService == nil {
+		var userCacheCli repository.UserCache
+		if s.UserServiceConfig().UseCache() {
+			userCacheCli = s.UserCache()
+		}
 		s.userService = userService.NewUserService(
 			s.UserRepo(ctx),
-			s.UserCache(),
+			userCacheCli,
 			s.TxManager(ctx),
 			s.UserServiceConfig(),
 		)
