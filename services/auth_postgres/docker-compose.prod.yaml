@@ -2,6 +2,7 @@ version: '3'
 
 volumes:
   auth_postgres_volume:
+  auth_redis_volume:
 
 services:
   auth_pg:
@@ -13,6 +14,18 @@ services:
       - "54321:5432"
     volumes:
       - auth_postgres_volume:/var/lib/postgresql/data
+    networks:
+      - auth
+
+  auth_redis:
+    image: redis:7.2.5-alpine3.20
+    container_name: auth_redis
+    env_file:
+      - prod.env
+    ports:
+      - "6379:6379"
+    volumes:
+      - auth_redis_volume:/data
     networks:
       - auth
 

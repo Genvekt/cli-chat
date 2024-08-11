@@ -48,7 +48,7 @@ jobs:
 
       - name: Build migrator
         run: |
-          docker-compose -f ${{ env.DB_DIR }}/docker-compose.prod.yaml build
+          docker compose -f ${{ env.DB_DIR }}/docker-compose.prod.yaml build
 
       - name: Push migrator to registry
         if: ${{ github.event_name != 'pull_request'}}
