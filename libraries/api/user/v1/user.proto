@@ -44,31 +44,35 @@ message CreateRequest {
   UserInfo info = 6;
 }
 
-message CreateResponse{
+message CreateResponse {
   int64 id = 1;
 }
 
-message GetRequest{
+message GetRequest {
   int64 id = 1;
 }
 
-message GetResponse{
+message GetResponse {
   reserved 1 to 6;
   User user = 7;
 }
 
-message UpdateRequest{
+message UpdateRequest {
   int64 id = 1;
   google.protobuf.StringValue name = 2;
   google.protobuf.StringValue email = 3;
   optional UserRole role = 4;
 }
 
-message DeleteRequest{
+message DeleteRequest {
   int64 id = 1;
 }
 
-message GetListRequest{
+message GetListRequest {
+  GetListFilters filters = 1;
+}
+
+message GetListFilters {
   repeated string names = 1;
 }
 
