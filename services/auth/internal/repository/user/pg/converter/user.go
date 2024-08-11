@@ -2,7 +2,7 @@ package converter
 
 import (
 	"github.com/Genvekt/cli-chat/services/auth/internal/model"
-	repoModel "github.com/Genvekt/cli-chat/services/auth/internal/repository/user/model"
+	repoModel "github.com/Genvekt/cli-chat/services/auth/internal/repository/user/pg/model"
 )
 
 // ToUserFromRepo converts user repository model to user service model
@@ -24,4 +24,11 @@ func ToUsersFromRepo(users []*repoModel.User) []*model.User {
 		serviceUsers = append(serviceUsers, ToUserFromRepo(user))
 	}
 	return serviceUsers
+}
+
+// ToRepoFiltersFromFilters Converts user filters from service layer to filters in repository layer
+func ToRepoFiltersFromFilters(filters *model.UserFilters) *repoModel.Filters {
+	return &repoModel.Filters{
+		Names: filters.Names,
+	}
 }

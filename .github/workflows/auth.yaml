@@ -5,9 +5,13 @@ on:
       - main
     paths:
       - 'services/auth/**'
+      - 'libraries/db_client/*'
+      - 'libraries/cache_client/*'
   pull_request:
     paths:
       - 'services/auth/**'
+      - 'libraries/db_client/*'
+      - 'libraries/cache_client/*'
 
 env:
   SERVICE_PATH: ./services/auth

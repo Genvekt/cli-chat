@@ -1,4 +1,4 @@
-package user
+package pg
 
 import (
 	"context"
@@ -9,11 +9,12 @@ import (
 	sq "github.com/Masterminds/squirrel"
 	"github.com/jackc/pgx/v4"
 
-	"github.com/Genvekt/cli-chat/services/auth/internal/client/db"
+	"github.com/Genvekt/cli-chat/libraries/db_client/pkg/db"
+	repoConverter "github.com/Genvekt/cli-chat/services/auth/internal/repository/user/pg/converter"
+	repoModel "github.com/Genvekt/cli-chat/services/auth/internal/repository/user/pg/model"
+
 	"github.com/Genvekt/cli-chat/services/auth/internal/model"
 	"github.com/Genvekt/cli-chat/services/auth/internal/repository"
-	repoConverter "github.com/Genvekt/cli-chat/services/auth/internal/repository/user/converter"
-	repoModel "github.com/Genvekt/cli-chat/services/auth/internal/repository/user/model"
 )
 
 const (
@@ -187,11 +188,16 @@ func (r *userRepositoryPostgres) Delete(ctx context.Context, id int64) error {
 }
 
 // GetList retrieves users by their names
-func (r *userRepositoryPostgres) GetList(ctx context.Context, names []string) ([]*model.User, error) {
+func (r *userRepositoryPostgres) GetList(ctx context.Context, filters *model.UserFilters) ([]*model.User, error) {
+	dbFilters := repoConverter.ToRepoFiltersFromFilters(filters)
+
 	builderQuery := sq.Select(idColumn, nameColumn, emailColumn, roleColumn, createdAtColumn, updatedAtColumn).
 		PlaceholderFormat(sq.Dollar).
-		From(userTable).
-		Where(sq.Eq{nameColumn: names})
+		From(userTable)
+
+	if len(dbFilters.Names) > 0 {
+		builderQuery = builderQuery.Where(sq.Eq{nameColumn: filters.Names})
+	}
 
 	query, args, err := builderQuery.ToSql()
 	if err != nil {

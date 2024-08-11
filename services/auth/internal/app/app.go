@@ -12,7 +12,7 @@ import (
 	"google.golang.org/grpc/reflection"
 
 	userApi "github.com/Genvekt/cli-chat/libraries/api/user/v1"
-	"github.com/Genvekt/cli-chat/services/auth/internal/closer"
+	"github.com/Genvekt/cli-chat/libraries/closer/pkg/closer"
 	"github.com/Genvekt/cli-chat/services/auth/internal/config"
 )
 
