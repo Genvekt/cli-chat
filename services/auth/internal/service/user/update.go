@@ -25,16 +25,16 @@ func (s *userService) Update(ctx context.Context, dto *model.UserUpdateDTO) erro
 	}
 
 	err := s.txManager.ReadCommitted(ctx, func(ctx context.Context) error {
-		err := s.userRepo.Update(ctx, dto.ID, updateFunc)
-		if err != nil {
-			return err
+		txErr := s.userRepo.Update(ctx, dto.ID, updateFunc)
+		if txErr != nil {
+			return txErr
 		}
 
 		// Delete old user version from cache
-		err = s.deleteCache(ctx, dto.ID)
-		if err != nil && !errors.Is(err, ErrNoCacheUsed) {
+		txErr = s.deleteCache(ctx, dto.ID)
+		if txErr != nil && !errors.Is(txErr, ErrNoCacheUsed) {
 			// We cannot leave old user version in cache when it is updated in database
-			return err
+			return txErr
 		}
 
 		return nil

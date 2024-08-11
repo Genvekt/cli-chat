@@ -12,6 +12,7 @@ import (
 var ErrPasswordsNotMatch = errors.New(`passwords do not match`)
 
 func validateCreateRequest(req *userApi.CreateRequest) error {
+	// proto validate cannot compare fields..
 	if req.Password != req.PasswordConfirm {
 		return ErrPasswordsNotMatch
 	}

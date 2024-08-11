@@ -26,6 +26,11 @@ type GRPCConfig interface {
 	Address() string
 }
 
+// HTTPConfig provides parameters related to HTTP server
+type HTTPConfig interface {
+	Address() string
+}
+
 // PostgresConfig provides parameters related to Postgres database
 type PostgresConfig interface {
 	DSN() string

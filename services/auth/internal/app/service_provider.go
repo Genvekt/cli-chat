@@ -27,6 +27,8 @@ import (
 // ServiceProvider initialises and stores various dependencies as singletons
 type ServiceProvider struct {
 	gRPCConfig        config.GRPCConfig
+	httpConfig        config.HTTPConfig
+	swaggerConfig     config.HTTPConfig
 	postgresConfig    config.PostgresConfig
 	redisConfig       cacheConfig.RedisConfig
 	userServiceConfig config.UserServiceConfig
@@ -62,6 +64,34 @@ func (s *ServiceProvider) GRPCConfig() config.GRPCConfig {
 	}
 
 	return s.gRPCConfig
+}
+
+// HTTPConfig provides configuration of http server of this application
+func (s *ServiceProvider) HTTPConfig() config.HTTPConfig {
+	if s.httpConfig == nil {
+		httpConfig, err := env.NewHTTPConfigEnv()
+		if err != nil {
+			log.Fatalf("failed to load http config: %v", err)
+		}
+
+		s.httpConfig = httpConfig
+	}
+
+	return s.httpConfig
+}
+
+// SwaggerConfig provides configuration of swagger server of this application
+func (s *ServiceProvider) SwaggerConfig() config.HTTPConfig {
+	if s.swaggerConfig == nil {
+		swaggerCongig, err := env.NewSwaggerConfigEnv()
+		if err != nil {
+			log.Fatalf("failed to load swagger config: %v", err)
+		}
+
+		s.swaggerConfig = swaggerCongig
+	}
+
+	return s.swaggerConfig
 }
 
 // PGConfig provides configuration parameters for postgres db
