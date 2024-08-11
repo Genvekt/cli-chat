@@ -1,6 +1,7 @@
 FROM golang:1.22.5-alpine as builder
 
-COPY libraries/api /app/libraries/api
+COPY libraries /app/libraries
+
 COPY services/chat_server /app/services/chat_server
 
 WORKDIR /app/services/chat_server

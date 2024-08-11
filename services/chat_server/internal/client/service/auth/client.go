@@ -25,7 +25,9 @@ func NewAuthClient(client service.UserGrpcClient) *authGRPCClient {
 
 // GetList retrieves users by their usernames
 func (c *authGRPCClient) GetList(ctx context.Context, usernames []string) ([]*model.User, error) {
-	req := &userApi.GetListRequest{Names: usernames}
+	req := &userApi.GetListRequest{
+		Filters: &userApi.GetListFilters{Names: usernames},
+	}
 
 	res, err := c.client.GetList(ctx, req)
 	if err != nil {
