@@ -9,7 +9,7 @@ import (
 
 // GetList handles GetListRequest
 func (s *Service) GetList(ctx context.Context, req *userApi.GetListRequest) (*userApi.GetListResponse, error) {
-	users, err := s.userService.GetList(ctx, req.Names)
+	users, err := s.userService.GetList(ctx, converter.ToUserFiltersFromProto(req.GetFilters()))
 	if err != nil {
 		return nil, err
 	}

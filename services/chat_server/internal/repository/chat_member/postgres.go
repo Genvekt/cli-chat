@@ -8,7 +8,8 @@ import (
 	sq "github.com/Masterminds/squirrel"
 	"github.com/jackc/pgx/v4"
 
-	"github.com/Genvekt/cli-chat/services/chat-server/internal/client/db"
+	"github.com/Genvekt/cli-chat/libraries/db_client/pkg/db"
+
 	"github.com/Genvekt/cli-chat/services/chat-server/internal/model"
 	"github.com/Genvekt/cli-chat/services/chat-server/internal/repository"
 	"github.com/Genvekt/cli-chat/services/chat-server/internal/repository/chat_member/converter"
