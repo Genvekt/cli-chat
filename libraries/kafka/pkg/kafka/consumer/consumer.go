@@ -11,7 +11,9 @@ import (
 	"github.com/Genvekt/cli-chat/libraries/kafka/pkg/kafka"
 )
 
-var _ kafka.Consumer = (*kafkaConsumer)(nil)
+var _ kafka.Consumer[sarama.ConsumerMessage] = (*kafkaConsumer)(nil)
+
+type Handler func(ctx context.Context, msg *sarama.ConsumerMessage) error
 
 type kafkaConsumer struct {
 	consumerGroup        sarama.ConsumerGroup
@@ -29,7 +31,7 @@ func NewConsumer(
 	}
 }
 
-func (c *kafkaConsumer) Consume(ctx context.Context, topic string, handler kafka.Handler) error {
+func (c *kafkaConsumer) Consume(ctx context.Context, topic string, handler kafka.Handler[sarama.ConsumerMessage]) error {
 	c.consumerGroupHandler.msgHandler = handler
 
 	return c.consume(ctx, topic)

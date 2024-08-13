@@ -94,44 +94,19 @@ func (a *App) runHTTPServer() error {
 }
 
 // Run starts application and triggers closer on stop
-func (a *App) Run(ctx context.Context) error {
+func (a *App) Run(_ context.Context) error {
 	defer func() {
 		closer.CloseAll()
 		closer.Wait()
 	}()
 
 	wg := sync.WaitGroup{}
-	wg.Add(2)
+	wg.Add(1)
 
 	go func() {
 		defer wg.Done()
 		if err := a.runHTTPServer(); err != nil {
 			log.Fatalf("Failed to run HTTP server: %v", err)
-		}
-	}()
-
-	go func() {
-		defer wg.Done()
-		if err := a.runProducers(ctx); err != nil {
-			log.Fatalf("Failed to run consumers: %v", err)
-		}
-	}()
-
-	wg.Wait()
-
-	return nil
-}
-
-func (a *App) runProducers(ctx context.Context) error {
-
-	wg := &sync.WaitGroup{}
-	wg.Add(1)
-
-	go func() {
-		defer wg.Done()
-		err := a.provider.UserCreatorService().RunProducer(ctx)
-		if err != nil {
-			log.Printf("failed to run procuser: %s", err.Error())
 		}
 	}()
 

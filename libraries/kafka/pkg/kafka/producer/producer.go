@@ -1,7 +1,6 @@
 package producer
 
 import (
-	"fmt"
 	"log"
 
 	"github.com/IBM/sarama"
@@ -9,7 +8,7 @@ import (
 	"github.com/Genvekt/cli-chat/libraries/kafka/pkg/kafka"
 )
 
-var _ kafka.Producer = (*kafkaProducer)(nil)
+var _ kafka.Producer[sarama.ProducerMessage] = (*kafkaProducer)(nil)
 
 type kafkaProducer struct {
 	producer sarama.SyncProducer
@@ -22,12 +21,7 @@ func NewProducer(producer sarama.SyncProducer) *kafkaProducer {
 	}
 }
 
-func (p *kafkaProducer) SendMessage(iMsg interface{}) error {
-	msg, ok := iMsg.(*sarama.ProducerMessage)
-	if !ok {
-		return fmt.Errorf("unexpected message type: want %T, got %T", &sarama.ProducerMessage{}, iMsg)
-	}
-
+func (p *kafkaProducer) SendMessage(msg *sarama.ProducerMessage) error {
 	partition, offset, err := p.producer.SendMessage(msg)
 	if err != nil {
 		return err

@@ -8,6 +8,8 @@ import (
 	"github.com/Genvekt/cli-chat/libraries/closer/pkg/closer"
 	"github.com/Genvekt/cli-chat/libraries/kafka/pkg/kafka"
 	"github.com/Genvekt/cli-chat/libraries/kafka/pkg/kafka/producer"
+	kafkaCli "github.com/Genvekt/cli-chat/services/auth_producer/internal/client/kafka"
+	kafkaUserCli "github.com/Genvekt/cli-chat/services/auth_producer/internal/client/kafka/user"
 	"github.com/Genvekt/cli-chat/services/auth_producer/internal/config/env"
 
 	userImpl "github.com/Genvekt/cli-chat/services/auth_producer/internal/api/user"
@@ -22,9 +24,11 @@ type ServiceProvider struct {
 
 	kafkaProducerConfig config.KafkaProducerConfig
 	syncProducer        sarama.SyncProducer
-	kafkaProducer       kafka.Producer
+	kafkaProducer       kafka.Producer[sarama.ProducerMessage]
 
-	userCreatorConfig  config.UserCreatorConfig
+	userKafkaClientConfig config.UserKafkaClientConfig
+	userKafkaClient       kafkaCli.UserClient
+
 	userCreatorService service.UserCreatorService
 
 	userAPI *userImpl.Service
@@ -80,7 +84,7 @@ func (s *ServiceProvider) SyncProducer() sarama.SyncProducer {
 }
 
 // KafkaProducer initialises kafka producer
-func (s *ServiceProvider) KafkaProducer() kafka.Producer {
+func (s *ServiceProvider) KafkaProducer() kafka.Producer[sarama.ProducerMessage] {
 	if s.kafkaProducer == nil {
 		s.kafkaProducer = producer.NewProducer(s.SyncProducer())
 
@@ -90,27 +94,33 @@ func (s *ServiceProvider) KafkaProducer() kafka.Producer {
 	return s.kafkaProducer
 }
 
-// UserCreatorConfig loads config related to user creator
-func (s *ServiceProvider) UserCreatorConfig() config.UserCreatorConfig {
-	if s.userCreatorConfig == nil {
+// UserKafkaClientConfig loads config related to user kafka client
+func (s *ServiceProvider) UserKafkaClientConfig() config.UserKafkaClientConfig {
+	if s.userKafkaClientConfig == nil {
 		conf, err := env.NewUserCreatorConfigEnv()
 		if err != nil {
 			log.Fatalf("Error loading user creator config: %v", err)
 		}
 
-		s.userCreatorConfig = conf
+		s.userKafkaClientConfig = conf
 	}
 
-	return s.userCreatorConfig
+	return s.userKafkaClientConfig
+}
+
+// UserKafkaClient retrieves instance of UserClient to kafka
+func (s *ServiceProvider) UserKafkaClient() kafkaCli.UserClient {
+	if s.userKafkaClient == nil {
+		s.userKafkaClient = kafkaUserCli.NewUserClient(s.UserKafkaClientConfig(), s.KafkaProducer())
+	}
+
+	return s.userKafkaClient
 }
 
 // UserCreatorService provides user creator
 func (s *ServiceProvider) UserCreatorService() service.UserCreatorService {
 	if s.userCreatorService == nil {
-		s.userCreatorService = producerService.NewUserCreatorService(
-			s.UserCreatorConfig(),
-			s.KafkaProducer(),
-		)
+		s.userCreatorService = producerService.NewUserCreatorService(s.UserKafkaClient())
 	}
 
 	return s.userCreatorService

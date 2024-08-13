@@ -9,7 +9,7 @@ import (
 )
 
 type GroupHandler struct {
-	msgHandler kafka.Handler
+	msgHandler kafka.Handler[sarama.ConsumerMessage]
 }
 
 // NewGroupHandler creates

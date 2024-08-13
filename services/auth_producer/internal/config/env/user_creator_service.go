@@ -11,7 +11,7 @@ const (
 	userCreatorTopicEnv = "USER_CREATOR_TOPIC"
 )
 
-var _ config.UserCreatorConfig = (*userCreatorConfigEnv)(nil)
+var _ config.UserKafkaClientConfig = (*userCreatorConfigEnv)(nil)
 
 type userCreatorConfigEnv struct {
 	topic string

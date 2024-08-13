@@ -31,7 +31,7 @@ type KafkaProducerConfig interface {
 	Config() *sarama.Config
 }
 
-// UserCreatorConfig provides parameters related to user creator
-type UserCreatorConfig interface {
+// UserKafkaClientConfig provides parameters related to user kafka client
+type UserKafkaClientConfig interface {
 	Topic() string
 }
