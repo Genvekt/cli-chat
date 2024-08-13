@@ -141,8 +141,9 @@ func (a *App) initSwaggerServer(_ context.Context) error {
 	mux.HandleFunc("/userApi.swagger.json", serveSwaggerFile("/userApi.swagger.json"))
 
 	a.swaggerServer = &http.Server{
-		Addr:    a.provider.SwaggerConfig().Address(),
-		Handler: mux,
+		Addr:              a.provider.SwaggerConfig().Address(),
+		Handler:           mux,
+		ReadHeaderTimeout: time.Second * 5,
 	}
 
 	return nil
@@ -195,7 +196,7 @@ func (a *App) Run(ctx context.Context) error {
 	}()
 
 	wg := sync.WaitGroup{}
-	wg.Add(3)
+	wg.Add(4)
 
 	go func() {
 		defer wg.Done()
@@ -218,13 +219,20 @@ func (a *App) Run(ctx context.Context) error {
 		}
 	}()
 
+	go func() {
+		defer wg.Done()
+		if err := a.runConsumers(ctx); err != nil {
+			log.Fatalf("Failed to run consumers: %v", err)
+		}
+	}()
+
 	wg.Wait()
 
 	return nil
 }
 
 func serveSwaggerFile(path string) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, _ *http.Request) {
 		log.Printf("Serving swagger file: %s", path)
 
 		statikFs, err := fs.New()
@@ -240,7 +248,12 @@ func serveSwaggerFile(path string) http.HandlerFunc {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		defer file.Close()
+		defer func() {
+			closeErr := file.Close()
+			if closeErr != nil {
+				log.Printf("Failed to close file: %v", closeErr)
+			}
+		}()
 
 		log.Printf("Read swagger file: %s", path)
 
@@ -261,4 +274,22 @@ func serveSwaggerFile(path string) http.HandlerFunc {
 
 		log.Printf("Served swagger file: %s", path)
 	}
+}
+
+func (a *App) runConsumers(ctx context.Context) error {
+
+	wg := &sync.WaitGroup{}
+	wg.Add(1)
+
+	go func() {
+		defer wg.Done()
+		log.Printf("Started user saver consumer")
+
+		err := a.provider.UserSaverService(ctx).RunConsumer(ctx)
+		if err != nil {
+			log.Printf("failed to run consumer: %s", err.Error())
+		}
+	}()
+
+	return nil
 }

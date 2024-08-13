@@ -12,6 +12,7 @@ import (
 	"google.golang.org/grpc/reflection"
 
 	"github.com/Genvekt/cli-chat/libraries/closer/pkg/closer"
+	"github.com/Genvekt/cli-chat/services/chat-server/internal/interceptor"
 
 	chatApi "github.com/Genvekt/cli-chat/libraries/api/chat/v1"
 	"github.com/Genvekt/cli-chat/services/chat-server/internal/config"
@@ -76,8 +77,13 @@ func (a *App) initServiceProvider(_ context.Context) error {
 }
 
 func (a *App) initGRPCServer(ctx context.Context) error {
-	a.grpcServer = grpc.NewServer(grpc.Creds(insecure.NewCredentials()))
+	a.grpcServer = grpc.NewServer(
+		grpc.Creds(insecure.NewCredentials()),
+		grpc.UnaryInterceptor(interceptor.ValidateInterceptor),
+	)
+
 	reflection.Register(a.grpcServer)
+
 	chatApi.RegisterChatV1Server(a.grpcServer, a.provider.ChatImpl(ctx))
 
 	return nil

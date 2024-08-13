@@ -6,7 +6,7 @@ import (
 	"fmt"
 
 	sq "github.com/Masterminds/squirrel"
-	"github.com/jackc/pgx/v4"
+	pgx "github.com/jackc/pgx/v4"
 
 	"github.com/Genvekt/cli-chat/libraries/db_client/pkg/db"
 

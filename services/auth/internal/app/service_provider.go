@@ -4,7 +4,12 @@ import (
 	"context"
 	"log"
 
+	"github.com/IBM/sarama"
+
 	redigo "github.com/gomodule/redigo/redis"
+
+	"github.com/Genvekt/cli-chat/libraries/kafka/pkg/kafka"
+	"github.com/Genvekt/cli-chat/libraries/kafka/pkg/kafka/consumer"
 
 	"github.com/Genvekt/cli-chat/libraries/closer/pkg/closer"
 
@@ -21,6 +26,7 @@ import (
 	userRepository "github.com/Genvekt/cli-chat/services/auth/internal/repository/user/pg"
 	userCache "github.com/Genvekt/cli-chat/services/auth/internal/repository/user/redis"
 	"github.com/Genvekt/cli-chat/services/auth/internal/service"
+	consumerService "github.com/Genvekt/cli-chat/services/auth/internal/service/consumer"
 	userService "github.com/Genvekt/cli-chat/services/auth/internal/service/user"
 )
 
@@ -33,6 +39,11 @@ type ServiceProvider struct {
 	redisConfig       cacheConfig.RedisConfig
 	userServiceConfig config.UserServiceConfig
 
+	kafkaConsumerConfig  config.KafkaConsumerConfig
+	consumerGroup        sarama.ConsumerGroup
+	consumerGroupHandler *consumer.GroupHandler
+	kafkaConsumer        kafka.Consumer
+
 	dbClient  db.Client
 	txManager db.TxManager
 
@@ -42,6 +53,9 @@ type ServiceProvider struct {
 	userRepo repository.UserRepository
 
 	userCache repository.UserCache
+
+	userSaverConfig  config.UserSaverConfig
+	userSaverService service.ConsumerService
 
 	userService service.UserService
 
@@ -122,6 +136,20 @@ func (s *ServiceProvider) RedisConfig() cacheConfig.RedisConfig {
 	return s.redisConfig
 }
 
+// KafkaConsumerConfig provides configuration parameters for kafka consumer
+func (s *ServiceProvider) KafkaConsumerConfig() config.KafkaConsumerConfig {
+	if s.kafkaConsumerConfig == nil {
+		kafkaConsumerConfig, err := env.NewKafkaConsumerConfig()
+		if err != nil {
+			log.Fatalf("failed to load kafka consumer config: %v", err)
+		}
+
+		s.kafkaConsumerConfig = kafkaConsumerConfig
+	}
+
+	return s.kafkaConsumerConfig
+}
+
 // DBClient provides DB client over postgres
 func (s *ServiceProvider) DBClient(ctx context.Context) db.Client {
 	if s.dbClient == nil {
@@ -197,7 +225,71 @@ func (s *ServiceProvider) UserRepo(ctx context.Context) repository.UserRepositor
 	return s.userRepo
 }
 
-// UserServiceConfig provides config for user dervice
+// ConsumerGroup provides kafka consumer group
+func (s *ServiceProvider) ConsumerGroup() sarama.ConsumerGroup {
+	if s.consumerGroup == nil {
+		consumerGroup, err := sarama.NewConsumerGroup(
+			s.KafkaConsumerConfig().Brokers(),
+			s.KafkaConsumerConfig().GroupID(),
+			s.KafkaConsumerConfig().Config(),
+		)
+		if err != nil {
+			log.Fatalf("failed to create consumer group: %v", err)
+		}
+
+		s.consumerGroup = consumerGroup
+	}
+
+	return s.consumerGroup
+}
+
+// ConsumerGroupHandler provides handler for kafka consumer group
+func (s *ServiceProvider) ConsumerGroupHandler() *consumer.GroupHandler {
+	if s.consumerGroupHandler == nil {
+		s.consumerGroupHandler = consumer.NewGroupHandler()
+	}
+
+	return s.consumerGroupHandler
+}
+
+// KafkaConsumer initialises kafka consumer
+func (s *ServiceProvider) KafkaConsumer() kafka.Consumer {
+	if s.kafkaConsumer == nil {
+		s.kafkaConsumer = consumer.NewConsumer(
+			s.ConsumerGroup(),
+			s.ConsumerGroupHandler(),
+		)
+
+		closer.Add(s.kafkaConsumer.Close)
+	}
+
+	return s.kafkaConsumer
+}
+
+// UserSaverConfig provides config for user saver service
+func (s *ServiceProvider) UserSaverConfig() config.UserSaverConfig {
+	if s.userSaverConfig == nil {
+		conf, err := env.NewUserSaverConfigEnv()
+		if err != nil {
+			log.Fatalf("failed to load user saver config: %v", err)
+		}
+
+		s.userSaverConfig = conf
+	}
+
+	return s.userSaverConfig
+}
+
+// UserSaverService provices instance of user saver service
+func (s *ServiceProvider) UserSaverService(ctx context.Context) service.ConsumerService {
+	if s.userSaverService == nil {
+		s.userSaverService = consumerService.NewUserSaverService(s.UserSaverConfig(), s.KafkaConsumer(), s.UserRepo(ctx))
+	}
+
+	return s.userSaverService
+}
+
+// UserServiceConfig provides config for user service
 func (s *ServiceProvider) UserServiceConfig() config.UserServiceConfig {
 	if s.userServiceConfig == nil {
 		userServiceConfig, err := env.NewUserServiceConfigEnv()

@@ -31,15 +31,17 @@ func (s *chatService) Create(ctx context.Context, name string, usernames []strin
 
 	var newChatID int64
 	err = s.txManager.ReadCommitted(ctx, func(ctx context.Context) error {
-		newChatID, err = s.chatRepo.Create(ctx, chat)
-		if err != nil {
-			return fmt.Errorf("cannot create chat: %v", err)
+		txChatID, txErr := s.chatRepo.Create(ctx, chat)
+		if txErr != nil {
+			return fmt.Errorf("cannot create chat: %v", txErr)
 		}
 
-		err = s.chatMemberRepo.CreateBatch(ctx, newChatID, userIDs)
-		if err != nil {
-			return fmt.Errorf("cannot create chat members: %v", err)
+		txErr = s.chatMemberRepo.CreateBatch(ctx, newChatID, userIDs)
+		if txErr != nil {
+			return fmt.Errorf("cannot create chat members: %v", txErr)
 		}
+
+		newChatID = txChatID
 
 		return nil
 	})

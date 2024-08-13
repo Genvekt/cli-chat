@@ -3,6 +3,7 @@ package config
 import (
 	"time"
 
+	"github.com/IBM/sarama"
 	"github.com/joho/godotenv"
 )
 
@@ -41,4 +42,16 @@ type UserServiceConfig interface {
 	CacheTTL() time.Duration
 	NoCache() bool
 	UseCache() bool
+}
+
+// KafkaConsumerConfig provides parameters related to kafka consumer
+type KafkaConsumerConfig interface {
+	Brokers() []string
+	GroupID() string
+	Config() *sarama.Config
+}
+
+// UserSaverConfig provides parameters related to user saver service
+type UserSaverConfig interface {
+	Topic() string
 }

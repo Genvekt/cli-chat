@@ -8,7 +8,7 @@ import (
 	"github.com/Genvekt/cli-chat/services/auth/internal/config"
 )
 
-var _ config.GRPCConfig = (*gRPCConfigEnv)(nil)
+var _ config.HTTPConfig = (*httpConfigEnv)(nil)
 
 const (
 	httpHostEnv = "HTTP_HOST"
@@ -23,7 +23,7 @@ type httpConfigEnv struct {
 	port string
 }
 
-// NewHTTPConfigEnv retrieves new httpConfigEnv instance
+// NewHTTPConfigEnv retrieves parameters for http server
 func NewHTTPConfigEnv() (*httpConfigEnv, error) {
 	host := os.Getenv(httpHostEnv)
 	if host == "" {
@@ -38,6 +38,7 @@ func NewHTTPConfigEnv() (*httpConfigEnv, error) {
 	return &httpConfigEnv{host: host, port: port}, nil
 }
 
+// NewSwaggerConfigEnv retrieves parameters for swagger http server
 func NewSwaggerConfigEnv() (*httpConfigEnv, error) {
 	host := os.Getenv(swaggerHostEnv)
 	if host == "" {
