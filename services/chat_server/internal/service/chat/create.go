@@ -36,7 +36,7 @@ func (s *chatService) Create(ctx context.Context, name string, usernames []strin
 			return fmt.Errorf("cannot create chat: %v", txErr)
 		}
 
-		txErr = s.chatMemberRepo.CreateBatch(ctx, newChatID, userIDs)
+		txErr = s.chatMemberRepo.CreateBatch(ctx, txChatID, userIDs)
 		if txErr != nil {
 			return fmt.Errorf("cannot create chat members: %v", txErr)
 		}
