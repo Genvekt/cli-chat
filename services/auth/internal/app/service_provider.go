@@ -42,7 +42,7 @@ type ServiceProvider struct {
 	kafkaConsumerConfig  config.KafkaConsumerConfig
 	consumerGroup        sarama.ConsumerGroup
 	consumerGroupHandler *consumer.GroupHandler
-	kafkaConsumer        kafka.Consumer
+	kafkaConsumer        kafka.Consumer[sarama.ConsumerMessage]
 
 	dbClient  db.Client
 	txManager db.TxManager
@@ -253,7 +253,7 @@ func (s *ServiceProvider) ConsumerGroupHandler() *consumer.GroupHandler {
 }
 
 // KafkaConsumer initialises kafka consumer
-func (s *ServiceProvider) KafkaConsumer() kafka.Consumer {
+func (s *ServiceProvider) KafkaConsumer() kafka.Consumer[sarama.ConsumerMessage] {
 	if s.kafkaConsumer == nil {
 		s.kafkaConsumer = consumer.NewConsumer(
 			s.ConsumerGroup(),

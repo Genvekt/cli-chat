@@ -3,7 +3,6 @@ package consumer
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"log"
 
 	"github.com/IBM/sarama"
@@ -20,14 +19,14 @@ var _ service.ConsumerService = (*userSaverService)(nil)
 
 type userSaverService struct {
 	config   config.UserSaverConfig
-	consumer kafka.Consumer
+	consumer kafka.Consumer[sarama.ConsumerMessage]
 	userRepo repository.UserRepository
 }
 
 // NewUserSaverService inits instance of user saver
 func NewUserSaverService(
 	conf config.UserSaverConfig,
-	consumer kafka.Consumer,
+	consumer kafka.Consumer[sarama.ConsumerMessage],
 	userRepo repository.UserRepository,
 ) *userSaverService {
 	return &userSaverService{
@@ -64,12 +63,7 @@ func (s *userSaverService) run(ctx context.Context) <-chan error {
 }
 
 // UserSaveHandler processes msg from kafka
-func (s *userSaverService) UserSaveHandler(ctx context.Context, iMsg interface{}) error {
-	msg, ok := iMsg.(*sarama.ConsumerMessage)
-	if !ok {
-		return fmt.Errorf("expected a ConsumerMessage")
-	}
-
+func (s *userSaverService) UserSaveHandler(ctx context.Context, msg *sarama.ConsumerMessage) error {
 	userInfo := &userApi.UserInfo{}
 	err := json.Unmarshal(msg.Value, userInfo)
 	if err != nil {
