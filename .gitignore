@@ -24,3 +24,4 @@ go.work.sum
 
 **/bin
 *.env
+**/vendor.protogen

@@ -53,6 +53,7 @@ func NewUserServiceConfigEnv() (*userServiceConfigEnv, error) {
 	}, nil
 }
 
+// CacheTTL returns the ttl of cache
 func (s *userServiceConfigEnv) CacheTTL() time.Duration {
 	return s.cacheTTL
 }

@@ -3,6 +3,7 @@ LOCAL_BIN:=$(CURDIR)/bin
 install-deps:
 	GOBIN=$(LOCAL_BIN) go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.59
 	GOBIN=$(LOCAL_BIN) go install github.com/gojuno/minimock/v3/cmd/minimock@v3.3.10
+	GOBIN=$(LOCAL_BIN) go install github.com/rakyll/statik@v0.1.7
 
 lint:
 	$(LOCAL_BIN)/golangci-lint run ./... --config ../../.golangci.pipeline.yaml
@@ -14,6 +15,10 @@ generate-mocks:
 	go generate ./internal/service/
 	go generate ./internal/repository/
 	go generate ./internal/config/
+
+generate-swagger:
+	cp ../../libraries/api/user/swagger/api.swagger.json ./pkg/swagger/userApi.swagger.json
+	$(LOCAL_BIN)/statik -src=pkg/swagger/ -include='*.css,*.html,*.js,*.json,*.png'
 
 test:
 	go clean -testcache

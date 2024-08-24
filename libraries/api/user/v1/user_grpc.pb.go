@@ -23,10 +23,15 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type UserV1Client interface {
+	// Create new user
 	Create(ctx context.Context, in *CreateRequest, opts ...grpc.CallOption) (*CreateResponse, error)
+	// Get user
 	Get(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*GetResponse, error)
+	// List users with filters
 	GetList(ctx context.Context, in *GetListRequest, opts ...grpc.CallOption) (*GetListResponse, error)
+	// Update user data
 	Update(ctx context.Context, in *UpdateRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	// Delete user
 	Delete(ctx context.Context, in *DeleteRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 }
 
@@ -87,10 +92,15 @@ func (c *userV1Client) Delete(ctx context.Context, in *DeleteRequest, opts ...gr
 // All implementations must embed UnimplementedUserV1Server
 // for forward compatibility
 type UserV1Server interface {
+	// Create new user
 	Create(context.Context, *CreateRequest) (*CreateResponse, error)
+	// Get user
 	Get(context.Context, *GetRequest) (*GetResponse, error)
+	// List users with filters
 	GetList(context.Context, *GetListRequest) (*GetListResponse, error)
+	// Update user data
 	Update(context.Context, *UpdateRequest) (*emptypb.Empty, error)
+	// Delete user
 	Delete(context.Context, *DeleteRequest) (*emptypb.Empty, error)
 	mustEmbedUnimplementedUserV1Server()
 }
