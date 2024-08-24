@@ -5,16 +5,67 @@ package user_v1;
 import "google/protobuf/empty.proto";
 import "google/protobuf/wrappers.proto";
 import "google/protobuf/timestamp.proto";
+import "google/api/annotations.proto";
+import "validate/validate.proto";
+import "protoc-gen-openapiv2/options/annotations.proto";
 
 
 option go_package = "github.com/Genvekt/cli-chat/libraries/api/user/v1;user_v1";
 
+option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_swagger) = {
+  info: {
+    title: "User API"
+    version: "1.0.0"
+    contact: {
+      name: "Evgenia Kivotova"
+      email: "e.kivotova@gmail.com"
+    };
+  };
+
+  host: "localhost:8080",
+  schemes: HTTP,
+  schemes: HTTPS,
+  consumes: "application/json",
+  produces: "application/json",
+};
+
 service UserV1{
-  rpc Create(CreateRequest) returns (CreateResponse);
-  rpc Get(GetRequest) returns (GetResponse);
-  rpc GetList(GetListRequest) returns (GetListResponse);
-  rpc Update(UpdateRequest) returns (google.protobuf.Empty);
-  rpc Delete(DeleteRequest) returns (google.protobuf.Empty);
+  // Create new user
+  rpc Create(CreateRequest) returns (CreateResponse){
+    option (google.api.http) = {
+      post: "/user/v1"
+      body: "*"
+    };
+  }
+
+  // Get user
+  rpc Get(GetRequest) returns (GetResponse){
+    option (google.api.http) = {
+      get: "/user/v1"
+    };
+  }
+
+  // List users with filters
+  rpc GetList(GetListRequest) returns (GetListResponse){
+    option (google.api.http) = {
+      get: "/user/v1/list"
+    };
+  }
+
+  // Update user data
+  rpc Update(UpdateRequest) returns (google.protobuf.Empty){
+    option (google.api.http) = {
+      patch: "/user/v1"
+      body: "*"
+    };
+  }
+
+  // Delete user
+  rpc Delete(DeleteRequest) returns (google.protobuf.Empty){
+    option (google.api.http) = {
+      delete: "/user/v1"
+    };
+  }
 }
 
 enum UserRole {
@@ -24,21 +75,28 @@ enum UserRole {
 }
 
 message UserInfo {
-  string name = 1;
-  string email = 2;
+  // Unique name of a user
+  string name = 1 [(validate.rules).string = {not_contains: " ", max_len: 25}];
+  // Email of a user
+  string email = 2 [(validate.rules).string.email = true];
   UserRole role = 3;
 }
 
 message User {
+  // Internal user id
   int64 id = 1;
   UserInfo info = 2;
+  // Time when user was created
   google.protobuf.Timestamp created_at = 3;
+  // Time when user was last updated
   google.protobuf.Timestamp updated_at = 4;
 }
 
 message CreateRequest {
   reserved 1, 2;
+  // Password of a user
   string password = 3;
+  // Repeated password to prevent user typos
   string password_confirm = 4;
   reserved 5;
   UserInfo info = 6;
@@ -59,8 +117,8 @@ message GetResponse {
 
 message UpdateRequest {
   int64 id = 1;
-  google.protobuf.StringValue name = 2;
-  google.protobuf.StringValue email = 3;
+  google.protobuf.StringValue name = 2 [(validate.rules).string = {not_contains: " ", max_len: 25}];
+  google.protobuf.StringValue email = 3 [(validate.rules).string.email = true];
   optional UserRole role = 4;
 }
 
@@ -69,11 +127,13 @@ message DeleteRequest {
 }
 
 message GetListRequest {
+  // Filters to apply to users
   GetListFilters filters = 1;
 }
 
 message GetListFilters {
-  repeated string names = 1;
+  // List of unique user names to filter
+  repeated string names = 1 [(validate.rules).repeated = {unique:true, items: {string: {not_contains: " ", max_len: 25}}}];;
 }
 
 message GetListResponse {

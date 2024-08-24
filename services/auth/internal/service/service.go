@@ -14,3 +14,8 @@ type UserService interface {
 	Update(ctx context.Context, dto *model.UserUpdateDTO) error
 	Delete(ctx context.Context, id int64) error
 }
+
+// ConsumerService consumes messages
+type ConsumerService interface {
+	RunConsumer(ctx context.Context) error
+}
