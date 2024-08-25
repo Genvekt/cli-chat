@@ -15,6 +15,7 @@ import (
 
 	chatImpl "github.com/Genvekt/cli-chat/services/chat-server/internal/api/chat"
 	serviceClient "github.com/Genvekt/cli-chat/services/chat-server/internal/client/service"
+	accessClient "github.com/Genvekt/cli-chat/services/chat-server/internal/client/service/access"
 	authClient "github.com/Genvekt/cli-chat/services/chat-server/internal/client/service/auth"
 	"github.com/Genvekt/cli-chat/services/chat-server/internal/config"
 	"github.com/Genvekt/cli-chat/services/chat-server/internal/config/env"
@@ -39,7 +40,10 @@ type ServiceProvider struct {
 	chatMemberRepo repository.ChatMemberRepository
 	messageRepo    repository.MessageRepository
 
-	authClient serviceClient.AuthClient
+	authConn *grpc.ClientConn
+
+	authClient   serviceClient.AuthClient
+	accessClient serviceClient.AccessClient
 
 	chatService service.ChatService
 
@@ -123,20 +127,38 @@ func (s *ServiceProvider) TxManager(ctx context.Context) db.TxManager {
 	return s.txManager
 }
 
-// AuthClient provides auth service client dependency
-func (s *ServiceProvider) AuthClient() serviceClient.AuthClient {
-	if s.authClient == nil {
+// AuthConn provides grpc connection to auth service
+func (s *ServiceProvider) AuthConn() *grpc.ClientConn {
+	if s.authConn == nil {
 		conn, err := grpc.NewClient(s.AuthCliGRPCConfig().Address(), grpc.WithTransportCredentials(insecure.NewCredentials()))
 		if err != nil {
 			log.Fatalf("failed to connect to auth service: %v", err)
 		}
 
-		s.authClient = authClient.NewAuthClient(authClient.NewAuthGrpcClient(conn))
-
 		closer.Add(conn.Close)
+
+		s.authConn = conn
+	}
+
+	return s.authConn
+}
+
+// AuthClient provides auth service client dependency
+func (s *ServiceProvider) AuthClient() serviceClient.AuthClient {
+	if s.authClient == nil {
+		s.authClient = authClient.NewAuthClient(authClient.NewAuthGrpcClient(s.AuthConn()))
 	}
 
 	return s.authClient
+}
+
+// AccessClient provides access service client dependency
+func (s *ServiceProvider) AccessClient() serviceClient.AccessClient {
+	if s.accessClient == nil {
+		s.accessClient = accessClient.NewAccessClient(accessClient.NewAccessGrpcClient(s.AuthConn()))
+	}
+
+	return s.accessClient
 }
 
 // ChatRepo provides chat repository dependency

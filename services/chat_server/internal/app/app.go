@@ -77,9 +77,13 @@ func (a *App) initServiceProvider(_ context.Context) error {
 }
 
 func (a *App) initGRPCServer(ctx context.Context) error {
+	authorization := interceptor.NewAuthorization(a.provider.AccessClient())
 	a.grpcServer = grpc.NewServer(
 		grpc.Creds(insecure.NewCredentials()),
-		grpc.UnaryInterceptor(interceptor.ValidateInterceptor),
+		grpc.ChainUnaryInterceptor(
+			interceptor.ValidateInterceptor,
+			authorization.Interceptor,
+		),
 	)
 
 	reflection.Register(a.grpcServer)
