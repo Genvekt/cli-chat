@@ -8,12 +8,13 @@ import (
 // ToUserFromRepo converts user repository model to user service model
 func ToUserFromRepo(user *repoModel.User) *model.User {
 	return &model.User{
-		ID:        user.ID,
-		Name:      user.Name,
-		Email:     user.Email,
-		Role:      user.Role,
-		CreatedAt: user.CreatedAt,
-		UpdatedAt: user.UpdatedAt,
+		ID:           user.ID,
+		Name:         user.Name,
+		Email:        user.Email,
+		Role:         user.Role,
+		PasswordHash: user.PasswordHash,
+		CreatedAt:    user.CreatedAt,
+		UpdatedAt:    user.UpdatedAt,
 	}
 }
 

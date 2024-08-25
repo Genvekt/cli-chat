@@ -27,7 +27,12 @@ func (s *Service) Create(ctx context.Context, req *userApi.CreateRequest) (*user
 		return nil, err
 	}
 
-	userID, err := s.userService.Create(ctx, converter.ToUserFromProtoInfo(req.GetInfo()))
+	passwordHash, err := s.hasher.HashPassword(ctx, req.Password)
+	if err != nil {
+		return nil, err
+	}
+
+	userID, err := s.userService.Create(ctx, converter.ToUserFromProtoInfo(req.GetInfo(), passwordHash))
 	if err != nil {
 		return nil, err
 	}

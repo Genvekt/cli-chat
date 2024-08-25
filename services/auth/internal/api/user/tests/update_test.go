@@ -96,7 +96,7 @@ func TestUpdate(t *testing.T) {
 			t.Parallel()
 
 			userServiceMock := tt.userServiceMock(mc)
-			api := userImpl.NewService(userServiceMock)
+			api := userImpl.NewService(userServiceMock, nil)
 
 			resp, err := api.Update(tt.args.ctx, tt.args.req)
 			require.Equal(t, tt.wand, resp)

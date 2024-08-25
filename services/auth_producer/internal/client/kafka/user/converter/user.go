@@ -9,11 +9,15 @@ import (
 	"github.com/Genvekt/cli-chat/services/auth_producer/internal/model"
 )
 
-// UserToKafkaUserInfo converts user service model to kafka message model
-func UserToKafkaUserInfo(user *model.User) *userApi.UserInfo {
-	return &userApi.UserInfo{
-		Name:  user.Name,
-		Email: user.Email,
+// UserToKafkaUser converts user service model to kafka message model
+func UserToKafkaUser(user *model.User) *userApi.CreateRequest {
+	return &userApi.CreateRequest{
+		Password:        user.Password,
+		PasswordConfirm: user.Password,
+		Info: &userApi.UserInfo{
+			Name:  user.Name,
+			Email: user.Email,
+		},
 	}
 }
 

@@ -15,6 +15,7 @@ generate-mocks:
 	go generate ./internal/service/
 	go generate ./internal/repository/
 	go generate ./internal/config/
+	go generate ./internal/utils/
 
 generate-swagger:
 	cp ../../libraries/api/user/swagger/api.swagger.json ./pkg/swagger/userApi.swagger.json

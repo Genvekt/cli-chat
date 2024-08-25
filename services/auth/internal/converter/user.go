@@ -8,11 +8,12 @@ import (
 )
 
 // ToUserFromProtoInfo converts user api model to user service model
-func ToUserFromProtoInfo(user *userApi.UserInfo) *model.User {
+func ToUserFromProtoInfo(user *userApi.UserInfo, passwordHash string) *model.User {
 	return &model.User{
-		Name:  user.Name,
-		Email: user.Email,
-		Role:  int(user.Role),
+		Name:         user.Name,
+		Email:        user.Email,
+		Role:         int(user.Role),
+		PasswordHash: passwordHash,
 	}
 }
 

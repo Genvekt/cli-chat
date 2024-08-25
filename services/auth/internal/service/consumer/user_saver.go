@@ -3,6 +3,7 @@ package consumer
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"log"
 
 	"github.com/IBM/sarama"
@@ -13,6 +14,7 @@ import (
 	"github.com/Genvekt/cli-chat/services/auth/internal/converter"
 	"github.com/Genvekt/cli-chat/services/auth/internal/repository"
 	"github.com/Genvekt/cli-chat/services/auth/internal/service"
+	"github.com/Genvekt/cli-chat/services/auth/internal/utils"
 )
 
 var _ service.ConsumerService = (*userSaverService)(nil)
@@ -21,6 +23,7 @@ type userSaverService struct {
 	config   config.UserSaverConfig
 	consumer kafka.Consumer[sarama.ConsumerMessage]
 	userRepo repository.UserRepository
+	hasher   utils.Hasher
 }
 
 // NewUserSaverService inits instance of user saver
@@ -28,11 +31,13 @@ func NewUserSaverService(
 	conf config.UserSaverConfig,
 	consumer kafka.Consumer[sarama.ConsumerMessage],
 	userRepo repository.UserRepository,
+	hasher utils.Hasher,
 ) *userSaverService {
 	return &userSaverService{
 		config:   conf,
 		consumer: consumer,
 		userRepo: userRepo,
+		hasher:   hasher,
 	}
 }
 
@@ -64,13 +69,22 @@ func (s *userSaverService) run(ctx context.Context) <-chan error {
 
 // UserSaveHandler processes msg from kafka
 func (s *userSaverService) UserSaveHandler(ctx context.Context, msg *sarama.ConsumerMessage) error {
-	userInfo := &userApi.UserInfo{}
-	err := json.Unmarshal(msg.Value, userInfo)
+	req := &userApi.CreateRequest{}
+	err := json.Unmarshal(msg.Value, req)
 	if err != nil {
 		return err
 	}
 
-	user := converter.ToUserFromProtoInfo(userInfo)
+	if req.Password != req.PasswordConfirm {
+		return fmt.Errorf("passwords not match")
+	}
+
+	passwordHash, err := s.hasher.HashPassword(ctx, req.Password)
+	if err != nil {
+		return err
+	}
+
+	user := converter.ToUserFromProtoInfo(req.GetInfo(), passwordHash)
 
 	id, err := s.userRepo.Create(ctx, user)
 	if err != nil {

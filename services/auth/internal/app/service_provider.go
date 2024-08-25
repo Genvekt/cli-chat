@@ -10,6 +10,9 @@ import (
 
 	"github.com/Genvekt/cli-chat/libraries/kafka/pkg/kafka"
 	"github.com/Genvekt/cli-chat/libraries/kafka/pkg/kafka/consumer"
+	"github.com/Genvekt/cli-chat/services/auth/internal/utils"
+	"github.com/Genvekt/cli-chat/services/auth/internal/utils/hash"
+	"github.com/Genvekt/cli-chat/services/auth/internal/utils/token"
 
 	"github.com/Genvekt/cli-chat/libraries/closer/pkg/closer"
 
@@ -19,13 +22,18 @@ import (
 	"github.com/Genvekt/cli-chat/libraries/db_client/pkg/db"
 	"github.com/Genvekt/cli-chat/libraries/db_client/pkg/db/pg"
 	"github.com/Genvekt/cli-chat/libraries/db_client/pkg/db/transaction"
+	accessImpl "github.com/Genvekt/cli-chat/services/auth/internal/api/access"
+	authImpl "github.com/Genvekt/cli-chat/services/auth/internal/api/auth"
 	userImpl "github.com/Genvekt/cli-chat/services/auth/internal/api/user"
 	"github.com/Genvekt/cli-chat/services/auth/internal/config"
 	"github.com/Genvekt/cli-chat/services/auth/internal/config/env"
 	"github.com/Genvekt/cli-chat/services/auth/internal/repository"
+	accessRepository "github.com/Genvekt/cli-chat/services/auth/internal/repository/access/pg"
 	userRepository "github.com/Genvekt/cli-chat/services/auth/internal/repository/user/pg"
 	userCache "github.com/Genvekt/cli-chat/services/auth/internal/repository/user/redis"
 	"github.com/Genvekt/cli-chat/services/auth/internal/service"
+	accessService "github.com/Genvekt/cli-chat/services/auth/internal/service/access"
+	authService "github.com/Genvekt/cli-chat/services/auth/internal/service/auth"
 	consumerService "github.com/Genvekt/cli-chat/services/auth/internal/service/consumer"
 	userService "github.com/Genvekt/cli-chat/services/auth/internal/service/user"
 )
@@ -39,6 +47,13 @@ type ServiceProvider struct {
 	redisConfig       cacheConfig.RedisConfig
 	userServiceConfig config.UserServiceConfig
 
+	refreshTokenConfig config.TokenProviderConfig
+	accessTokenConfig  config.TokenProviderConfig
+
+	passwordHasher       utils.Hasher
+	refreshTokenProvider utils.TokenProvider
+	accessTokenProvider  utils.TokenProvider
+
 	kafkaConsumerConfig  config.KafkaConsumerConfig
 	consumerGroup        sarama.ConsumerGroup
 	consumerGroupHandler *consumer.GroupHandler
@@ -50,16 +65,21 @@ type ServiceProvider struct {
 	redisPool   *redigo.Pool
 	redisClient cache.RedisClient
 
-	userRepo repository.UserRepository
+	userRepo   repository.UserRepository
+	accessRepo repository.AccessRepository
 
 	userCache repository.UserCache
 
 	userSaverConfig  config.UserSaverConfig
 	userSaverService service.ConsumerService
 
-	userService service.UserService
+	userService   service.UserService
+	authService   service.AuthService
+	accessService service.AccessService
 
-	userImpl *userImpl.Service
+	userImpl   *userImpl.Service
+	authImpl   *authImpl.Service
+	accessImpl *accessImpl.Service
 }
 
 func newServiceProvider() *ServiceProvider {
@@ -150,6 +170,61 @@ func (s *ServiceProvider) KafkaConsumerConfig() config.KafkaConsumerConfig {
 	return s.kafkaConsumerConfig
 }
 
+// RefreshTokenConfig provides configuration parameters for refresh token
+func (s *ServiceProvider) RefreshTokenConfig() config.TokenProviderConfig {
+	if s.refreshTokenConfig == nil {
+		conf, err := env.NewRefreshTokenProviderConfig()
+		if err != nil {
+			log.Fatalf("failed to load refresh token config: %v", err)
+		}
+
+		s.refreshTokenConfig = conf
+	}
+
+	return s.refreshTokenConfig
+}
+
+// RefreshTokenProvider provides refresh token
+func (s *ServiceProvider) RefreshTokenProvider() utils.TokenProvider {
+	if s.refreshTokenProvider == nil {
+		s.refreshTokenProvider = token.NewTokenProvider(s.RefreshTokenConfig())
+	}
+
+	return s.refreshTokenProvider
+}
+
+// AccessTokenConfig provides configuration parameters for access token
+func (s *ServiceProvider) AccessTokenConfig() config.TokenProviderConfig {
+	if s.accessTokenConfig == nil {
+		conf, err := env.NewAccessTokenProviderConfig()
+		if err != nil {
+			log.Fatalf("failed to load access token config: %v", err)
+		}
+
+		s.accessTokenConfig = conf
+	}
+
+	return s.accessTokenConfig
+}
+
+// AccessTokenProvider provides access token
+func (s *ServiceProvider) AccessTokenProvider() utils.TokenProvider {
+	if s.accessTokenProvider == nil {
+		s.accessTokenProvider = token.NewTokenProvider(s.AccessTokenConfig())
+	}
+
+	return s.accessTokenProvider
+}
+
+// PasswordHasher initialises password hasher
+func (s *ServiceProvider) PasswordHasher() utils.Hasher {
+	if s.passwordHasher == nil {
+		s.passwordHasher = hash.NewHasher()
+	}
+
+	return s.passwordHasher
+}
+
 // DBClient provides DB client over postgres
 func (s *ServiceProvider) DBClient(ctx context.Context) db.Client {
 	if s.dbClient == nil {
@@ -225,6 +300,15 @@ func (s *ServiceProvider) UserRepo(ctx context.Context) repository.UserRepositor
 	return s.userRepo
 }
 
+// AccessRepo provides access repository dependency
+func (s *ServiceProvider) AccessRepo(ctx context.Context) repository.AccessRepository {
+	if s.accessRepo == nil {
+		s.accessRepo = accessRepository.NewAccessRepositoryPostgres(s.DBClient(ctx))
+	}
+
+	return s.accessRepo
+}
+
 // ConsumerGroup provides kafka consumer group
 func (s *ServiceProvider) ConsumerGroup() sarama.ConsumerGroup {
 	if s.consumerGroup == nil {
@@ -283,7 +367,12 @@ func (s *ServiceProvider) UserSaverConfig() config.UserSaverConfig {
 // UserSaverService provices instance of user saver service
 func (s *ServiceProvider) UserSaverService(ctx context.Context) service.ConsumerService {
 	if s.userSaverService == nil {
-		s.userSaverService = consumerService.NewUserSaverService(s.UserSaverConfig(), s.KafkaConsumer(), s.UserRepo(ctx))
+		s.userSaverService = consumerService.NewUserSaverService(
+			s.UserSaverConfig(),
+			s.KafkaConsumer(),
+			s.UserRepo(ctx),
+			s.PasswordHasher(),
+		)
 	}
 
 	return s.userSaverService
@@ -320,11 +409,52 @@ func (s *ServiceProvider) UserService(ctx context.Context) service.UserService {
 	return s.userService
 }
 
+// AuthService initialises auth service layer
+func (s *ServiceProvider) AuthService(ctx context.Context) service.AuthService {
+	if s.authService == nil {
+		s.authService = authService.NewAuthService(
+			s.UserRepo(ctx),
+			s.RefreshTokenProvider(),
+			s.AccessTokenProvider(),
+			s.PasswordHasher(),
+		)
+	}
+
+	return s.authService
+}
+
+// AccessService initialises access service layer
+func (s *ServiceProvider) AccessService(ctx context.Context) service.AccessService {
+	if s.accessService == nil {
+		s.accessService = accessService.NewAccessService(s.AccessTokenProvider(), s.AccessRepo(ctx))
+	}
+
+	return s.accessService
+}
+
 // UserImpl Initialises user api server
 func (s *ServiceProvider) UserImpl(ctx context.Context) *userImpl.Service {
 	if s.userImpl == nil {
-		s.userImpl = userImpl.NewService(s.UserService(ctx))
+		s.userImpl = userImpl.NewService(s.UserService(ctx), s.PasswordHasher())
 	}
 
 	return s.userImpl
+}
+
+// AuthImpl Initialises auth api server
+func (s *ServiceProvider) AuthImpl(ctx context.Context) *authImpl.Service {
+	if s.authImpl == nil {
+		s.authImpl = authImpl.NewService(s.AuthService(ctx))
+	}
+
+	return s.authImpl
+}
+
+// AccessImpl Initialises access api server
+func (s *ServiceProvider) AccessImpl(ctx context.Context) *accessImpl.Service {
+	if s.accessImpl == nil {
+		s.accessImpl = accessImpl.NewService(s.AccessService(ctx))
+	}
+
+	return s.accessImpl
 }

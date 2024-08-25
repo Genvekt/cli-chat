@@ -21,6 +21,8 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/reflection"
 
+	accessApi "github.com/Genvekt/cli-chat/libraries/api/access/v1"
+	authApi "github.com/Genvekt/cli-chat/libraries/api/auth/v1"
 	userApi "github.com/Genvekt/cli-chat/libraries/api/user/v1"
 	"github.com/Genvekt/cli-chat/libraries/closer/pkg/closer"
 	"github.com/Genvekt/cli-chat/services/auth/internal/config"
@@ -98,6 +100,8 @@ func (a *App) initGRPCServer(ctx context.Context) error {
 	reflection.Register(a.grpcServer)
 
 	userApi.RegisterUserV1Server(a.grpcServer, a.provider.UserImpl(ctx))
+	authApi.RegisterAuthV1Server(a.grpcServer, a.provider.AuthImpl(ctx))
+	accessApi.RegisterAccessV1Server(a.grpcServer, a.provider.AccessImpl(ctx))
 
 	return nil
 }
