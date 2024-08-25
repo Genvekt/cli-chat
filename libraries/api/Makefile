@@ -14,6 +14,8 @@ get-deps:
 generate:
 	make generate-user-api
 	make generate-chat-api
+	make generate-access-api
+	make generate-auth-api
 
 generate-user-api:
 	protoc --proto_path user/v1 --proto_path vendor.protogen \
@@ -42,6 +44,34 @@ generate-chat-api:
     --openapiv2_out=allow_merge=true,merge_file_name=api:chat/swagger \
     --plugin=protoc-gen-openapiv2=bin/protoc-gen-openapiv2 \
     chat/v1/chat.proto
+
+generate-auth-api:
+	protoc --proto_path auth/v1 --proto_path vendor.protogen \
+	--go_out=auth/v1 --go_opt=paths=source_relative \
+	--plugin=protoc-gen-go=bin/protoc-gen-go \
+	--go-grpc_out=auth/v1 --go-grpc_opt=paths=source_relative \
+	--plugin=protoc-gen-go-grpc=bin/protoc-gen-go-grpc \
+	--validate_out lang=go:auth/v1 --validate_opt=paths=source_relative \
+	--plugin=protoc-gen-validate=bin/protoc-gen-validate \
+	--grpc-gateway_out=auth/v1 --grpc-gateway_opt=paths=source_relative \
+	--plugin=protoc-gen-grpc-gateway=bin/protoc-gen-grpc-gateway \
+	--openapiv2_out=allow_merge=true,merge_file_name=api:auth/swagger \
+	--plugin=protoc-gen-openapiv2=bin/protoc-gen-openapiv2 \
+	auth/v1/auth.proto
+
+generate-access-api:
+	protoc --proto_path access/v1 --proto_path vendor.protogen \
+	--go_out=access/v1 --go_opt=paths=source_relative \
+	--plugin=protoc-gen-go=bin/protoc-gen-go \
+    --go-grpc_out=access/v1 --go-grpc_opt=paths=source_relative \
+    --plugin=protoc-gen-go-grpc=bin/protoc-gen-go-grpc \
+    --validate_out lang=go:access/v1 --validate_opt=paths=source_relative \
+    --plugin=protoc-gen-validate=bin/protoc-gen-validate \
+    --grpc-gateway_out=access/v1 --grpc-gateway_opt=paths=source_relative \
+    --plugin=protoc-gen-grpc-gateway=bin/protoc-gen-grpc-gateway \
+    --openapiv2_out=allow_merge=true,merge_file_name=api:access/swagger \
+    --plugin=protoc-gen-openapiv2=bin/protoc-gen-openapiv2 \
+    access/v1/access.proto
 
 vendor-proto:
 	@if [ ! -d vendor.protogen/validate ]; then \
