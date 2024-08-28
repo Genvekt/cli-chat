@@ -5,6 +5,7 @@ import (
 	"log"
 
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
 
 	"github.com/Genvekt/cli-chat/libraries/db_client/pkg/db"
@@ -130,7 +131,19 @@ func (s *ServiceProvider) TxManager(ctx context.Context) db.TxManager {
 // AuthConn provides grpc connection to auth service
 func (s *ServiceProvider) AuthConn() *grpc.ClientConn {
 	if s.authConn == nil {
-		conn, err := grpc.NewClient(s.AuthCliGRPCConfig().Address(), grpc.WithTransportCredentials(insecure.NewCredentials()))
+		var err error
+		creds := insecure.NewCredentials()
+
+		// configure TLS if it is enabled
+		if s.AuthCliGRPCConfig().IsTLSEnabled() {
+			creds, err = credentials.NewClientTLSFromFile(s.AuthCliGRPCConfig().TLSCertFile(), "")
+			if err != nil {
+				log.Fatalf("failed to load tls cert for auth grpc client: %v", err)
+			}
+			log.Println("Auth GRPC client: TLS enabled")
+		}
+
+		conn, err := grpc.NewClient(s.AuthCliGRPCConfig().Address(), grpc.WithTransportCredentials(creds))
 		if err != nil {
 			log.Fatalf("failed to connect to auth service: %v", err)
 		}

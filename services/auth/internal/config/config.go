@@ -25,6 +25,9 @@ func Load(filePath string) error {
 // GRPCConfig provides parameters related to GRPC server
 type GRPCConfig interface {
 	Address() string
+	TLSCertFile() string
+	TLSKeyFile() string
+	IsTLSEnabled() bool
 }
 
 // HTTPConfig provides parameters related to HTTP server
