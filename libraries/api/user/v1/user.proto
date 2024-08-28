@@ -133,7 +133,7 @@ message GetListRequest {
 
 message GetListFilters {
   // List of unique user names to filter
-  repeated string names = 1 [(validate.rules).repeated = {unique:true, items: {string: {not_contains: " ", max_len: 25}}}];;
+  repeated string names = 1 [(validate.rules).repeated = {unique:true, items: {string: {not_contains: " ", max_len: 25}}}];
 }
 
 message GetListResponse {

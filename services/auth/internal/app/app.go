@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/rs/cors"
+	"google.golang.org/grpc/credentials"
 
 	"github.com/rakyll/statik/fs"
 
@@ -90,8 +91,20 @@ func (a *App) initServiceProvider(_ context.Context) error {
 }
 
 func (a *App) initGRPCServer(ctx context.Context) error {
+	var err error
+
+	// configure TLS if it is enabled
+	creds := insecure.NewCredentials()
+	if a.provider.GRPCConfig().IsTLSEnabled() {
+		creds, err = credentials.NewServerTLSFromFile(a.provider.GRPCConfig().TLSCertFile(), a.provider.GRPCConfig().TLSKeyFile())
+		if err != nil {
+			return err
+		}
+		log.Println("GRPC TLS enabled")
+	}
+
 	a.grpcServer = grpc.NewServer(
-		grpc.Creds(insecure.NewCredentials()),
+		grpc.Creds(creds),
 		grpc.UnaryInterceptor(interceptor.ValidateInterceptor),
 	)
 
