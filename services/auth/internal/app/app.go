@@ -91,19 +91,16 @@ func (a *App) initServiceProvider(_ context.Context) error {
 }
 
 func (a *App) initGRPCServer(ctx context.Context) error {
-	var creds credentials.TransportCredentials
 	var err error
 
 	// configure TLS if it is enabled
+	creds := insecure.NewCredentials()
 	if a.provider.GRPCConfig().IsTLSEnabled() {
 		creds, err = credentials.NewServerTLSFromFile(a.provider.GRPCConfig().TLSCertFile(), a.provider.GRPCConfig().TLSKeyFile())
 		if err != nil {
 			return err
 		}
 		log.Println("GRPC TLS enabled")
-	} else {
-		creds = insecure.NewCredentials()
-		log.Println("GRPC TLS disabled")
 	}
 
 	a.grpcServer = grpc.NewServer(

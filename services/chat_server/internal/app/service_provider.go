@@ -127,8 +127,8 @@ func (s *ServiceProvider) TxManager(ctx context.Context) db.TxManager {
 // AuthClient provides auth service client dependency
 func (s *ServiceProvider) AuthClient() serviceClient.AuthClient {
 	if s.authClient == nil {
-		var creds credentials.TransportCredentials
 		var err error
+		creds := insecure.NewCredentials()
 
 		// configure TLS if it is enabled
 		if s.AuthCliGRPCConfig().IsTLSEnabled() {
@@ -137,9 +137,6 @@ func (s *ServiceProvider) AuthClient() serviceClient.AuthClient {
 				log.Fatalf("failed to load tls cert for auth grpc client: %v", err)
 			}
 			log.Println("Auth GRPC client: TLS enabled")
-		} else {
-			creds = insecure.NewCredentials()
-			log.Println("Auth GRPC client: TLS disabled")
 		}
 
 		conn, err := grpc.NewClient(s.AuthCliGRPCConfig().Address(), grpc.WithTransportCredentials(creds))
