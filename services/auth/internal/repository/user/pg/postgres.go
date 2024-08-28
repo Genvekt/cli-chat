@@ -18,13 +18,14 @@ import (
 )
 
 const (
-	userTable       = "\"user\"" // user is a reserved word in postgres, needs double quotes in query
-	idColumn        = "id"
-	nameColumn      = "name"
-	emailColumn     = "email"
-	roleColumn      = "role"
-	createdAtColumn = "created_at"
-	updatedAtColumn = "updated_at"
+	userTable          = "\"user\"" // user is a reserved word in postgres, needs double quotes in query
+	idColumn           = "id"
+	nameColumn         = "name"
+	emailColumn        = "email"
+	roleColumn         = "role"
+	passwordHashColumn = "password_hash"
+	createdAtColumn    = "created_at"
+	updatedAtColumn    = "updated_at"
 )
 
 var _ repository.UserRepository = (*userRepositoryPostgres)(nil)
@@ -46,8 +47,8 @@ func (r *userRepositoryPostgres) Create(ctx context.Context, user *model.User) (
 	// Create and update times are set to now() as default in database
 	builderInsert := sq.Insert(userTable).
 		PlaceholderFormat(sq.Dollar).
-		Columns(nameColumn, emailColumn, roleColumn).
-		Values(user.Name, user.Email, user.Role).
+		Columns(nameColumn, emailColumn, roleColumn, passwordHashColumn).
+		Values(user.Name, user.Email, user.Role, user.PasswordHash).
 		Suffix("RETURNING id")
 
 	query, args, err := builderInsert.ToSql()
@@ -71,10 +72,42 @@ func (r *userRepositoryPostgres) Create(ctx context.Context, user *model.User) (
 
 // Get retrieves user by id
 func (r *userRepositoryPostgres) Get(ctx context.Context, id int64) (*model.User, error) {
-	builderSelectOne := sq.Select(idColumn, nameColumn, emailColumn, roleColumn, createdAtColumn, updatedAtColumn).
+	builderSelectOne := sq.Select(idColumn, nameColumn, emailColumn, roleColumn, passwordHashColumn, createdAtColumn, updatedAtColumn).
 		From(userTable).
 		PlaceholderFormat(sq.Dollar).
-		Where(sq.Eq{"id": id}).
+		Where(sq.Eq{idColumn: id}).
+		Limit(1)
+
+	query, args, err := builderSelectOne.ToSql()
+	if err != nil {
+
+		return nil, fmt.Errorf("failed to build query: %v", err)
+	}
+
+	dbUser := &repoModel.User{}
+
+	q := db.Query{
+		Name:     "user_repository.Get",
+		QueryRaw: query,
+	}
+
+	err = r.db.DB().ScanOneContext(ctx, dbUser, q, args...)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, repository.ErrUserNotFound
+		}
+		return nil, err
+	}
+
+	return repoConverter.ToUserFromRepo(dbUser), nil
+}
+
+// GetByUsername retrieves user by username
+func (r *userRepositoryPostgres) GetByUsername(ctx context.Context, username string) (*model.User, error) {
+	builderSelectOne := sq.Select(idColumn, nameColumn, emailColumn, roleColumn, passwordHashColumn, createdAtColumn, updatedAtColumn).
+		From(userTable).
+		PlaceholderFormat(sq.Dollar).
+		Where(sq.Eq{nameColumn: username}).
 		Limit(1)
 
 	query, args, err := builderSelectOne.ToSql()
@@ -191,7 +224,7 @@ func (r *userRepositoryPostgres) Delete(ctx context.Context, id int64) error {
 func (r *userRepositoryPostgres) GetList(ctx context.Context, filters *model.UserFilters) ([]*model.User, error) {
 	dbFilters := repoConverter.ToRepoFiltersFromFilters(filters)
 
-	builderQuery := sq.Select(idColumn, nameColumn, emailColumn, roleColumn, createdAtColumn, updatedAtColumn).
+	builderQuery := sq.Select(idColumn, nameColumn, emailColumn, roleColumn, passwordHashColumn, createdAtColumn, updatedAtColumn).
 		PlaceholderFormat(sq.Dollar).
 		From(userTable)
 

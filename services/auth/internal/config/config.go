@@ -58,3 +58,9 @@ type KafkaConsumerConfig interface {
 type UserSaverConfig interface {
 	Topic() string
 }
+
+// TokenProviderConfig provides parameters related to token generation
+type TokenProviderConfig interface {
+	Secret() []byte
+	TTL() time.Duration
+}

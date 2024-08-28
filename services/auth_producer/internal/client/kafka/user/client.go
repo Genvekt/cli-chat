@@ -29,9 +29,9 @@ func NewUserClient(config config.UserKafkaClientConfig, producer kafka.Producer[
 
 // Create creates user
 func (c *userClient) Create(_ context.Context, user *model.User) error {
-	userInfo := converter.UserToKafkaUserInfo(user)
+	req := converter.UserToKafkaUser(user)
 
-	msg, err := converter.StructToMsg(userInfo, c.config.Topic())
+	msg, err := converter.StructToMsg(req, c.config.Topic())
 	if err != nil {
 		return err
 	}

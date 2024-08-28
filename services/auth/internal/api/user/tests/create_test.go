@@ -12,6 +12,7 @@ import (
 	userImpl "github.com/Genvekt/cli-chat/services/auth/internal/api/user"
 	"github.com/Genvekt/cli-chat/services/auth/internal/model"
 	serviceMock "github.com/Genvekt/cli-chat/services/auth/internal/service/mocks"
+	utilsMock "github.com/Genvekt/cli-chat/services/auth/internal/utils/mocks"
 
 	userApi "github.com/Genvekt/cli-chat/libraries/api/user/v1"
 )
@@ -25,6 +26,7 @@ func TestCreate(t *testing.T) {
 	}
 
 	type userServiceMockFunc func(mc minimock.MockController) *serviceMock.UserServiceMock
+	type hasherMockFunc func(mc minimock.MockController) *utilsMock.HasherMock
 
 	var (
 		ctx = context.Background()
@@ -36,6 +38,8 @@ func TestCreate(t *testing.T) {
 		roleUser  = userApi.UserRole_USER
 		password1 = gofakeit.Password(true, true, true, false, false, 15)
 		password2 = gofakeit.Password(true, true, true, false, false, 15)
+
+		passwordHash = gofakeit.HackerPhrase()
 
 		serviceErr = fmt.Errorf("service error")
 
@@ -58,9 +62,10 @@ func TestCreate(t *testing.T) {
 		}
 
 		userModel = &model.User{
-			Name:  name,
-			Email: email,
-			Role:  int(roleUser),
+			Name:         name,
+			Email:        email,
+			Role:         int(roleUser),
+			PasswordHash: passwordHash,
 		}
 
 		res = &userApi.CreateResponse{
@@ -74,6 +79,7 @@ func TestCreate(t *testing.T) {
 		want            *userApi.CreateResponse
 		err             error
 		userServiceMock userServiceMockFunc
+		hasherMockFunc  hasherMockFunc
 	}{
 		{
 			name: "Passwords match",
@@ -86,6 +92,11 @@ func TestCreate(t *testing.T) {
 			userServiceMock: func(mc minimock.MockController) *serviceMock.UserServiceMock {
 				mock := serviceMock.NewUserServiceMock(mc)
 				mock.CreateMock.Expect(ctx, userModel).Return(id, nil)
+				return mock
+			},
+			hasherMockFunc: func(mc minimock.MockController) *utilsMock.HasherMock {
+				mock := utilsMock.NewHasherMock(mc)
+				mock.HashPasswordMock.Expect(ctx, password1).Return(passwordHash, nil)
 				return mock
 			},
 		},
@@ -101,9 +112,13 @@ func TestCreate(t *testing.T) {
 				mock := serviceMock.NewUserServiceMock(mc)
 				return mock
 			},
+			hasherMockFunc: func(mc minimock.MockController) *utilsMock.HasherMock {
+				mock := utilsMock.NewHasherMock(mc)
+				return mock
+			},
 		},
 		{
-			name: "Failure",
+			name: "Failure create",
 			args: args{
 				ctx: ctx,
 				req: reqSamePass,
@@ -115,6 +130,29 @@ func TestCreate(t *testing.T) {
 				mock.CreateMock.Expect(ctx, userModel).Return(0, serviceErr)
 				return mock
 			},
+			hasherMockFunc: func(mc minimock.MockController) *utilsMock.HasherMock {
+				mock := utilsMock.NewHasherMock(mc)
+				mock.HashPasswordMock.Expect(ctx, password1).Return(passwordHash, nil)
+				return mock
+			},
+		},
+		{
+			name: "Failure hash password",
+			args: args{
+				ctx: ctx,
+				req: reqSamePass,
+			},
+			want: nil,
+			err:  serviceErr,
+			userServiceMock: func(mc minimock.MockController) *serviceMock.UserServiceMock {
+				mock := serviceMock.NewUserServiceMock(mc)
+				return mock
+			},
+			hasherMockFunc: func(mc minimock.MockController) *utilsMock.HasherMock {
+				mock := utilsMock.NewHasherMock(mc)
+				mock.HashPasswordMock.Expect(ctx, password1).Return("", serviceErr)
+				return mock
+			},
 		},
 	}
 
@@ -124,7 +162,8 @@ func TestCreate(t *testing.T) {
 			t.Parallel()
 
 			userServiceMock := tt.userServiceMock(mc)
-			api := userImpl.NewService(userServiceMock)
+			hasherMock := tt.hasherMockFunc(mc)
+			api := userImpl.NewService(userServiceMock, hasherMock)
 
 			apiRes, err := api.Create(tt.args.ctx, tt.args.req)
 			require.Equal(t, tt.want, apiRes)
