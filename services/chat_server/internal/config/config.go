@@ -20,6 +20,9 @@ func Load(filePath string) error {
 // GRPCConfig provides envs related to grpc server
 type GRPCConfig interface {
 	Address() string
+	TLSCertFile() string
+	TLSKeyFile() string
+	IsTLSEnabled() bool
 }
 
 // PostgresConfig provides envs related to postgres db

@@ -32,3 +32,11 @@ test-coverage:
 	go tool cover -html=coverage.out;
 	go tool cover -func=./coverage.out | grep "total";
 	grep -sqFx "/coverage.out" .gitignore || echo "/coverage.out" >> .gitignore
+
+gen-cert:
+	openssl genrsa -out certificate/keys/ca.key 4096
+	openssl req -new -x509 -key certificate/keys/ca.key -sha256 -subj "/C=US/ST=NJ/O=CA, Inc." -days 365 -out certificate/keys/ca.cert
+	openssl genrsa -out certificate/keys/service.key 4096
+	openssl req -new -key certificate/keys/service.key -out certificate/keys/service.csr -config certificate/certificate.conf
+	openssl x509 -req -in certificate/keys/service.csr -CA certificate/keys/ca.cert -CAkey certificate/keys/ca.key -CAcreateserial \
+    		-out certificate/keys/service.pem -days 365 -sha256 -extfile certificate/certificate.conf -extensions req_ext
