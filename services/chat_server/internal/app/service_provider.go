@@ -2,8 +2,8 @@ package app
 
 import (
 	"context"
-	"log"
 
+	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
@@ -11,6 +11,8 @@ import (
 	"github.com/Genvekt/cli-chat/libraries/db_client/pkg/db"
 	"github.com/Genvekt/cli-chat/libraries/db_client/pkg/db/pg"
 	"github.com/Genvekt/cli-chat/libraries/db_client/pkg/db/transaction"
+	"github.com/Genvekt/cli-chat/libraries/logger/pkg/logger"
+	"github.com/Genvekt/cli-chat/services/chat-server/internal/interceptor"
 
 	"github.com/Genvekt/cli-chat/libraries/closer/pkg/closer"
 
@@ -60,7 +62,7 @@ func (s *ServiceProvider) GRPCConfig() config.GRPCConfig {
 	if s.gRPCConfig == nil {
 		grpcConfig, err := env.NewGRPCConfigEnv()
 		if err != nil {
-			log.Fatalf("failed to load grpc config: %v", err)
+			logger.Fatal("failed to load grpc config", zap.Error(err))
 		}
 
 		s.gRPCConfig = grpcConfig
@@ -74,7 +76,7 @@ func (s *ServiceProvider) AuthCliGRPCConfig() config.GRPCConfig {
 	if s.authCliGRPCConfig == nil {
 		grpcConfig, err := env.NewAuthCliGRPCConfigEnv()
 		if err != nil {
-			log.Fatalf("failed to load auth grpc config: %v", err)
+			logger.Fatal("failed to load auth grpc config", zap.Error(err))
 		}
 
 		s.authCliGRPCConfig = grpcConfig
@@ -88,7 +90,7 @@ func (s *ServiceProvider) PGConfig() config.PostgresConfig {
 	if s.postgresConfig == nil {
 		postgresConfig, err := env.NewPostgresConfigEnv()
 		if err != nil {
-			log.Fatalf("failed to load postgres config: %v", err)
+			logger.Fatal("failed to load postgres config", zap.Error(err))
 		}
 
 		s.postgresConfig = postgresConfig
@@ -102,11 +104,11 @@ func (s *ServiceProvider) DBClient(ctx context.Context) db.Client {
 	if s.dbClient == nil {
 		dbClient, err := pg.New(ctx, s.PGConfig().DSN())
 		if err != nil {
-			log.Fatalf("failed to connect to postgres: %v", err)
+			logger.Fatal("failed to connect to postgres: %v", zap.Error(err))
 		}
 
-		if err := dbClient.DB().Ping(ctx); err != nil {
-			log.Fatalf("failed to ping postgres: %v", err)
+		if err = dbClient.DB().Ping(ctx); err != nil {
+			logger.Fatal("failed to ping postgres", zap.Error(err))
 		}
 
 		closer.Add(func() error {
@@ -138,14 +140,18 @@ func (s *ServiceProvider) AuthConn() *grpc.ClientConn {
 		if s.AuthCliGRPCConfig().IsTLSEnabled() {
 			creds, err = credentials.NewClientTLSFromFile(s.AuthCliGRPCConfig().TLSCertFile(), "")
 			if err != nil {
-				log.Fatalf("failed to load tls cert for auth grpc client: %v", err)
+				logger.Fatal("failed to load tls cert for auth grpc client", zap.Error(err))
 			}
-			log.Println("Auth GRPC client: TLS enabled")
+			logger.Debug("Auth GRPC client: TLS enabled")
 		}
 
-		conn, err := grpc.NewClient(s.AuthCliGRPCConfig().Address(), grpc.WithTransportCredentials(creds))
+		conn, err := grpc.NewClient(
+			s.AuthCliGRPCConfig().Address(),
+			grpc.WithTransportCredentials(creds),
+			grpc.WithUnaryInterceptor(interceptor.ClientLoggerInterceptor),
+		)
 		if err != nil {
-			log.Fatalf("failed to connect to auth service: %v", err)
+			logger.Fatal("failed to connect to auth service", zap.Error(err))
 		}
 
 		closer.Add(conn.Close)

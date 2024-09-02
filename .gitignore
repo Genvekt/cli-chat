@@ -27,3 +27,5 @@ go.work.sum
 **/vendor.protogen
 
 **/certificate/keys
+
+*.log

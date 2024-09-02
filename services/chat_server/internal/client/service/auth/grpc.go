@@ -2,8 +2,6 @@ package auth
 
 import (
 	"context"
-	"fmt"
-	"log"
 
 	"google.golang.org/grpc"
 
@@ -29,7 +27,6 @@ func (c *authGrpcClient) GetList(
 	ctx context.Context,
 	req *userApi.GetListRequest,
 ) (*userApi.GetListResponse, error) {
-	LogRequest(ctx, req)
 
 	resp, err := c.client.GetList(ctx, req)
 	if err != nil {
@@ -37,13 +34,4 @@ func (c *authGrpcClient) GetList(
 	}
 
 	return resp, nil
-}
-
-// LogRequest logs request sent to grpc client
-func LogRequest(ctx context.Context, req interface{}) {
-	log.Println(
-		ctx,
-		fmt.Sprintf("qrpc: %T", req),
-		fmt.Sprintf("request: %+v", req),
-	)
 }

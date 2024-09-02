@@ -1,9 +1,11 @@
 package user
 
 import (
-	"log"
 	"net/http"
 
+	"go.uber.org/zap"
+
+	"github.com/Genvekt/cli-chat/libraries/logger/pkg/logger"
 	"github.com/Genvekt/cli-chat/services/auth_producer/internal/service"
 )
 
@@ -26,7 +28,7 @@ func (s *Service) HandleCreate(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 		_, writeErr := w.Write([]byte(err.Error()))
 		if writeErr != nil {
-			log.Printf("can't write response: %v", writeErr)
+			logger.Error("failed to write create response", zap.Error(writeErr))
 		}
 	}
 }
