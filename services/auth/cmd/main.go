@@ -2,8 +2,10 @@ package main
 
 import (
 	"context"
-	"log"
 
+	"go.uber.org/zap"
+
+	"github.com/Genvekt/cli-chat/libraries/logger/pkg/logger"
 	"github.com/Genvekt/cli-chat/services/auth/internal/app"
 
 	// make init from static swagger service visible
@@ -15,11 +17,11 @@ func main() {
 
 	application, err := app.NewApp(ctx)
 	if err != nil {
-		log.Fatalf("failed to initialize application: %v", err)
+		logger.Fatal("failed to initialize application", zap.Error(err))
 	}
 
 	err = application.Run(ctx)
 	if err != nil {
-		log.Fatalf("failed to run application: %v", err)
+		logger.Fatal("failed to run application", zap.Error(err))
 	}
 }

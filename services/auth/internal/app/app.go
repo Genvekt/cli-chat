@@ -5,14 +5,19 @@ import (
 	"flag"
 	"fmt"
 	"io"
-	"log"
 	"net"
 	"net/http"
+	"os"
 	"sync"
 	"time"
 
+	"github.com/natefinch/lumberjack"
 	"github.com/rs/cors"
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 	"google.golang.org/grpc/credentials"
+
+	"github.com/Genvekt/cli-chat/libraries/logger/pkg/logger"
 
 	"github.com/rakyll/statik/fs"
 
@@ -33,6 +38,7 @@ import (
 // App is an application starting point
 type App struct {
 	configPath    string
+	logLevel      string
 	provider      *ServiceProvider
 	grpcServer    *grpc.Server
 	httpServer    *http.Server
@@ -55,6 +61,7 @@ func (a *App) initDeps(ctx context.Context) error {
 	deps := []func(context.Context) error{
 		a.initArgs,
 		a.initConfig,
+		a.initLogger,
 		a.initServiceProvider,
 		a.initGRPCServer,
 		a.initHTTPServer,
@@ -72,6 +79,7 @@ func (a *App) initDeps(ctx context.Context) error {
 
 func (a *App) initArgs(_ context.Context) error {
 	flag.StringVar(&a.configPath, "config-path", ".env", "path to .env config file")
+	flag.StringVar(&a.logLevel, "l", "info", "log level")
 	flag.Parse()
 
 	return nil
@@ -83,6 +91,15 @@ func (a *App) initConfig(_ context.Context) error {
 		return err
 	}
 
+	return nil
+}
+
+func (a *App) initLogger(_ context.Context) error {
+	logLevel, err := a.getLogAtomicLevel()
+	if err != nil {
+		return err
+	}
+	logger.Init(a.getLogCore(*logLevel))
 	return nil
 }
 
@@ -102,12 +119,15 @@ func (a *App) initGRPCServer(ctx context.Context) error {
 		if err != nil {
 			return err
 		}
-		log.Println("GRPC TLS enabled")
+		logger.Debug("GRPC TLS enabled")
 	}
 
 	a.grpcServer = grpc.NewServer(
 		grpc.Creds(creds),
-		grpc.UnaryInterceptor(interceptor.ValidateInterceptor),
+		grpc.ChainUnaryInterceptor(
+			interceptor.LogInterceptor,
+			interceptor.ValidateInterceptor,
+		),
 	)
 
 	reflection.Register(a.grpcServer)
@@ -173,7 +193,9 @@ func (a *App) runGRPCServer(_ context.Context) error {
 		return fmt.Errorf("failed to listen: %v", err)
 	}
 
-	log.Printf("Started gRPC server at %v", lis.Addr())
+	logger.Info("Started gRPC server",
+		zap.String("address", lis.Addr().String()),
+	)
 
 	err = a.grpcServer.Serve(lis)
 	if err != nil {
@@ -184,7 +206,9 @@ func (a *App) runGRPCServer(_ context.Context) error {
 }
 
 func (a *App) runHTTPServer() error {
-	log.Printf("Started HTTP server at %v", a.provider.HTTPConfig().Address())
+	logger.Info("Started HTTP server",
+		zap.String("address", a.provider.HTTPConfig().Address()),
+	)
 
 	err := a.httpServer.ListenAndServe()
 	if err != nil {
@@ -195,7 +219,9 @@ func (a *App) runHTTPServer() error {
 }
 
 func (a *App) runSwaggerServer() error {
-	log.Printf("Started Swagger server at %s", a.provider.SwaggerConfig().Address())
+	logger.Info("Started Swagger server",
+		zap.String("address", a.provider.SwaggerConfig().Address()),
+	)
 
 	err := a.swaggerServer.ListenAndServe()
 	if err != nil {
@@ -218,28 +244,28 @@ func (a *App) Run(ctx context.Context) error {
 	go func() {
 		defer wg.Done()
 		if err := a.runGRPCServer(ctx); err != nil {
-			log.Fatalf("Failed to run gRPC server: %v", err)
+			logger.Fatal("Failed to run gRPC server", zap.Error(err))
 		}
 	}()
 
 	go func() {
 		defer wg.Done()
 		if err := a.runHTTPServer(); err != nil {
-			log.Fatalf("Failed to run HTTP server: %v", err)
+			logger.Fatal("Failed to run HTTP server", zap.Error(err))
 		}
 	}()
 
 	go func() {
 		defer wg.Done()
 		if err := a.runSwaggerServer(); err != nil {
-			log.Fatalf("Failed to run swagger server: %v", err)
+			logger.Fatal("Failed to run swagger server", zap.Error(err))
 		}
 	}()
 
 	go func() {
 		defer wg.Done()
 		if err := a.runConsumers(ctx); err != nil {
-			log.Fatalf("Failed to run consumers: %v", err)
+			logger.Fatal("Failed to run consumers", zap.Error(err))
 		}
 	}()
 
@@ -250,7 +276,7 @@ func (a *App) Run(ctx context.Context) error {
 
 func serveSwaggerFile(path string) http.HandlerFunc {
 	return func(w http.ResponseWriter, _ *http.Request) {
-		log.Printf("Serving swagger file: %s", path)
+		logger.Debug("Serving swagger file", zap.String("path", path))
 
 		statikFs, err := fs.New()
 		if err != nil {
@@ -258,7 +284,7 @@ func serveSwaggerFile(path string) http.HandlerFunc {
 			return
 		}
 
-		log.Printf("Open swagger file: %s", path)
+		logger.Debug("Open swagger file", zap.String("path", path))
 
 		file, err := statikFs.Open(path)
 		if err != nil {
@@ -268,11 +294,14 @@ func serveSwaggerFile(path string) http.HandlerFunc {
 		defer func() {
 			closeErr := file.Close()
 			if closeErr != nil {
-				log.Printf("Failed to close file: %v", closeErr)
+				logger.Error("Failed to close file",
+					zap.Error(closeErr),
+					zap.String("path", path),
+				)
 			}
 		}()
 
-		log.Printf("Read swagger file: %s", path)
+		logger.Debug("Read swagger file", zap.String("path", path))
 
 		content, err := io.ReadAll(file)
 		if err != nil {
@@ -280,7 +309,7 @@ func serveSwaggerFile(path string) http.HandlerFunc {
 			return
 		}
 
-		log.Printf("Write swagger file: %s", path)
+		logger.Debug("Write swagger file", zap.String("path", path))
 
 		w.Header().Set("Content-Type", "application/json")
 		_, err = w.Write(content)
@@ -289,7 +318,7 @@ func serveSwaggerFile(path string) http.HandlerFunc {
 			return
 		}
 
-		log.Printf("Served swagger file: %s", path)
+		logger.Debug("Served swagger file", zap.String("path", path))
 	}
 }
 
@@ -300,13 +329,49 @@ func (a *App) runConsumers(ctx context.Context) error {
 
 	go func() {
 		defer wg.Done()
-		log.Printf("Started user saver consumer")
+		logger.Info("Started user saver consumer")
 
 		err := a.provider.UserSaverService(ctx).RunConsumer(ctx)
 		if err != nil {
-			log.Printf("failed to run consumer: %s", err.Error())
+			logger.Error("Failed to run consumer", zap.Error(err))
 		}
 	}()
 
 	return nil
+}
+
+func (a *App) getLogCore(level zap.AtomicLevel) zapcore.Core {
+	stdout := zapcore.AddSync(os.Stdout)
+
+	file := zapcore.AddSync(&lumberjack.Logger{
+		Filename:   "logs/app.log",
+		MaxSize:    10, // megabytes
+		MaxBackups: 3,
+		MaxAge:     7, // days
+	})
+
+	productionCfg := zap.NewProductionEncoderConfig()
+	productionCfg.TimeKey = "timestamp"
+	productionCfg.EncodeTime = zapcore.ISO8601TimeEncoder
+
+	developmentCfg := zap.NewDevelopmentEncoderConfig()
+	developmentCfg.EncodeLevel = zapcore.CapitalColorLevelEncoder
+
+	consoleEncoder := zapcore.NewConsoleEncoder(developmentCfg)
+	fileEncoder := zapcore.NewJSONEncoder(productionCfg)
+
+	return zapcore.NewTee(
+		zapcore.NewCore(consoleEncoder, stdout, level),
+		zapcore.NewCore(fileEncoder, file, level),
+	)
+}
+
+func (a *App) getLogAtomicLevel() (*zap.AtomicLevel, error) {
+	var level zapcore.Level
+	if err := level.Set(a.logLevel); err != nil {
+		return nil, fmt.Errorf("failed to set log level: %v", err)
+	}
+	atomicLevel := zap.NewAtomicLevelAt(level)
+
+	return &atomicLevel, nil
 }

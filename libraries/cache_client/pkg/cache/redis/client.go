@@ -2,10 +2,12 @@ package redis
 
 import (
 	"context"
-	"log"
 	"time"
 
 	"github.com/gomodule/redigo/redis"
+	"go.uber.org/zap"
+
+	"github.com/Genvekt/cli-chat/libraries/logger/pkg/logger"
 
 	"github.com/Genvekt/cli-chat/libraries/cache_client/pkg/cache"
 	"github.com/Genvekt/cli-chat/libraries/cache_client/pkg/config"
@@ -151,7 +153,7 @@ func (c *client) execute(ctx context.Context, handler handler) error {
 	defer func() {
 		err = conn.Close()
 		if err != nil {
-			log.Printf("failed to close redis connection: %v\n", err)
+			logger.Error("failed to close redis connection", zap.Error(err))
 		}
 	}()
 
@@ -169,7 +171,7 @@ func (c *client) getConnect(ctx context.Context) (redis.Conn, error) {
 
 	conn, err := c.pool.GetContext(getConnTimeoutCtx)
 	if err != nil {
-		log.Printf("failed to get redis connection: %v\n", err)
+		logger.Error("failed to get redis connection", zap.Error(err))
 
 		_ = conn.Close()
 		return nil, err

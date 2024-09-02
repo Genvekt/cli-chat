@@ -1,8 +1,11 @@
 module github.com/Genvekt/cli-chat/libraries/db_client
 
+replace github.com/Genvekt/cli-chat/libraries/logger => ../../libraries/logger
+
 go 1.22.5
 
 require (
+	github.com/Genvekt/cli-chat/libraries/logger v0.0.0-00010101000000-000000000000
 	github.com/georgysavva/scany v1.2.2
 	github.com/gojuno/minimock/v3 v3.3.13
 	github.com/jackc/pgconn v1.14.3
@@ -20,6 +23,8 @@ require (
 	github.com/jackc/pgtype v1.14.0 // indirect
 	github.com/jackc/puddle v1.3.0 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
+	go.uber.org/multierr v1.10.0 // indirect
+	go.uber.org/zap v1.27.0 // indirect
 	golang.org/x/crypto v0.20.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
 )

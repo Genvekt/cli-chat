@@ -1,10 +1,13 @@
 package closer
 
 import (
-	"fmt"
 	"os"
 	"os/signal"
 	"sync"
+
+	"go.uber.org/zap"
+
+	"github.com/Genvekt/cli-chat/libraries/logger/pkg/logger"
 )
 
 var globalCloser = New()
@@ -77,7 +80,7 @@ func (c *Closer) CloseAll() {
 
 		for i := 0; i < cap(errs); i++ {
 			if err := <-errs; err != nil {
-				fmt.Println("closer func returned error:", err)
+				logger.Error("closer func returned error", zap.Error(err))
 			}
 		}
 	})
