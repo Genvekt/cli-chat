@@ -5,7 +5,8 @@ import (
 	"go.uber.org/zap/zapcore"
 )
 
-var globalLogger *zap.Logger
+// default logger, initialised by default
+var globalLogger = zap.Must(zap.NewProduction())
 
 func Init(core zapcore.Core, options ...zap.Option) {
 	globalLogger = zap.New(core, options...)
