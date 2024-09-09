@@ -200,7 +200,7 @@ func (a *App) initSwaggerServer(_ context.Context) error {
 	return nil
 }
 
-func (a *App) initPrometheusServer(ctx context.Context) error {
+func (a *App) initPrometheusServer(_ context.Context) error {
 	mux := http.NewServeMux()
 	mux.Handle("/metrics", promhttp.Handler())
 

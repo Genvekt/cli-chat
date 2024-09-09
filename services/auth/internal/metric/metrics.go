@@ -12,6 +12,7 @@ const (
 	appName   = "auth"
 )
 
+// Metrics holds all prometheus metrics of this application
 type Metrics struct {
 	requestCounter        prometheus.Counter
 	responseCounter       *prometheus.CounterVec
@@ -20,6 +21,7 @@ type Metrics struct {
 
 var metrics *Metrics
 
+// Init initialises prometheus metrics
 func Init(_ context.Context) error {
 	metrics = &Metrics{
 		requestCounter: promauto.NewCounter(
@@ -54,14 +56,17 @@ func Init(_ context.Context) error {
 	return nil
 }
 
+// IncRequestCounter increments number of incoming grpc requests
 func IncRequestCounter() {
 	metrics.requestCounter.Inc()
 }
 
+// IncResponseCounter increments number of outcoming grpc responces
 func IncResponseCounter(status string, method string) {
 	metrics.responseCounter.WithLabelValues(status, method).Inc()
 }
 
+// HistogramResponseTimeObserve tracks sample of grpc response time
 func HistogramResponseTimeObserve(status string, time float64) {
 	metrics.histogramResponseTime.WithLabelValues(status).Observe(time)
 }
