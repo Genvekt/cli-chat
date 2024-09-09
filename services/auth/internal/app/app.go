@@ -11,7 +11,9 @@ import (
 	"sync"
 	"time"
 
+	"github.com/grpc-ecosystem/grpc-opentracing/go/otgrpc"
 	"github.com/natefinch/lumberjack"
+	"github.com/opentracing/opentracing-go"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/rs/cors"
 	"go.uber.org/zap"
@@ -20,6 +22,7 @@ import (
 
 	"github.com/Genvekt/cli-chat/libraries/logger/pkg/logger"
 	"github.com/Genvekt/cli-chat/services/auth/internal/metric"
+	"github.com/Genvekt/cli-chat/services/auth/internal/tracing"
 
 	"github.com/rakyll/statik/fs"
 
@@ -67,6 +70,7 @@ func (a *App) initDeps(ctx context.Context) error {
 		a.initLogger,
 		a.initMetrics,
 		a.initServiceProvider,
+		a.initJaegerTracing,
 		a.initGRPCServer,
 		a.initHTTPServer,
 		a.initSwaggerServer,
@@ -116,6 +120,15 @@ func (a *App) initMetrics(ctx context.Context) error {
 	return nil
 }
 
+func (a *App) initJaegerTracing(_ context.Context) error {
+	err := tracing.Init(a.provider.JaegerConfig())
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (a *App) initServiceProvider(_ context.Context) error {
 	a.provider = newServiceProvider()
 
@@ -138,6 +151,7 @@ func (a *App) initGRPCServer(ctx context.Context) error {
 	a.grpcServer = grpc.NewServer(
 		grpc.Creds(creds),
 		grpc.ChainUnaryInterceptor(
+			otgrpc.OpenTracingServerInterceptor(opentracing.GlobalTracer()),
 			interceptor.LogInterceptor,
 			interceptor.MetricsInterceptor,
 			interceptor.ValidateInterceptor,

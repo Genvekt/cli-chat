@@ -17,6 +17,7 @@ import (
 	"github.com/Genvekt/cli-chat/libraries/closer/pkg/closer"
 	"github.com/Genvekt/cli-chat/libraries/logger/pkg/logger"
 	"github.com/Genvekt/cli-chat/services/chat-server/internal/interceptor"
+	"github.com/Genvekt/cli-chat/services/chat-server/internal/tracing"
 
 	chatApi "github.com/Genvekt/cli-chat/libraries/api/chat/v1"
 	"github.com/Genvekt/cli-chat/services/chat-server/internal/config"
@@ -48,6 +49,7 @@ func (a *App) initDeps(ctx context.Context) error {
 		a.initConfig,
 		a.initLogger,
 		a.initServiceProvider,
+		a.initJaegerTracing,
 		a.initGRPCServer,
 	}
 
@@ -92,11 +94,21 @@ func (a *App) initServiceProvider(_ context.Context) error {
 	return nil
 }
 
+func (a *App) initJaegerTracing(_ context.Context) error {
+	err := tracing.Init(a.provider.JaegerConfig())
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (a *App) initGRPCServer(ctx context.Context) error {
 	authorization := interceptor.NewAuthorization(a.provider.AccessClient())
 	a.grpcServer = grpc.NewServer(
 		grpc.Creds(insecure.NewCredentials()),
 		grpc.ChainUnaryInterceptor(
+			interceptor.ServerTracingInterceptor,
 			interceptor.ValidateInterceptor,
 			authorization.Interceptor,
 		),

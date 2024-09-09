@@ -3,6 +3,8 @@ package app
 import (
 	"context"
 
+	"github.com/grpc-ecosystem/grpc-opentracing/go/otgrpc"
+	"github.com/opentracing/opentracing-go"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
@@ -35,6 +37,7 @@ type ServiceProvider struct {
 	gRPCConfig        config.GRPCConfig
 	authCliGRPCConfig config.GRPCConfig
 	postgresConfig    config.PostgresConfig
+	jaegerConfig      config.JaegerTracingConfig
 
 	dbClient  db.Client
 	txManager db.TxManager
@@ -99,6 +102,19 @@ func (s *ServiceProvider) PGConfig() config.PostgresConfig {
 	return s.postgresConfig
 }
 
+// JaegerConfig provides configuration parameters for jaeger
+func (s *ServiceProvider) JaegerConfig() config.JaegerTracingConfig {
+	if s.jaegerConfig == nil {
+		cfg, err := env.NewJaegerTracingConfigEnv()
+		if err != nil {
+			logger.Fatal("failed to load jaeger tracing config", zap.Error(err))
+		}
+		s.jaegerConfig = cfg
+	}
+
+	return s.jaegerConfig
+}
+
 // DBClient provides DB client over postgres
 func (s *ServiceProvider) DBClient(ctx context.Context) db.Client {
 	if s.dbClient == nil {
@@ -148,7 +164,10 @@ func (s *ServiceProvider) AuthConn() *grpc.ClientConn {
 		conn, err := grpc.NewClient(
 			s.AuthCliGRPCConfig().Address(),
 			grpc.WithTransportCredentials(creds),
-			grpc.WithUnaryInterceptor(interceptor.ClientLoggerInterceptor),
+			grpc.WithChainUnaryInterceptor(
+				otgrpc.OpenTracingClientInterceptor(opentracing.GlobalTracer()),
+				interceptor.ClientLoggerInterceptor,
+			),
 		)
 		if err != nil {
 			logger.Fatal("failed to connect to auth service", zap.Error(err))
