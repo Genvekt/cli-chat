@@ -12,12 +12,14 @@ import (
 	"time"
 
 	"github.com/natefinch/lumberjack"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/rs/cors"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"google.golang.org/grpc/credentials"
 
 	"github.com/Genvekt/cli-chat/libraries/logger/pkg/logger"
+	"github.com/Genvekt/cli-chat/services/auth/internal/metric"
 
 	"github.com/rakyll/statik/fs"
 
@@ -37,12 +39,13 @@ import (
 
 // App is an application starting point
 type App struct {
-	configPath    string
-	logLevel      string
-	provider      *ServiceProvider
-	grpcServer    *grpc.Server
-	httpServer    *http.Server
-	swaggerServer *http.Server
+	configPath       string
+	logLevel         string
+	provider         *ServiceProvider
+	grpcServer       *grpc.Server
+	httpServer       *http.Server
+	swaggerServer    *http.Server
+	prometheusServer *http.Server
 }
 
 // NewApp initialises app and all its dependencies
@@ -62,10 +65,12 @@ func (a *App) initDeps(ctx context.Context) error {
 		a.initArgs,
 		a.initConfig,
 		a.initLogger,
+		a.initMetrics,
 		a.initServiceProvider,
 		a.initGRPCServer,
 		a.initHTTPServer,
 		a.initSwaggerServer,
+		a.initPrometheusServer,
 	}
 
 	for _, dep := range deps {
@@ -103,6 +108,14 @@ func (a *App) initLogger(_ context.Context) error {
 	return nil
 }
 
+func (a *App) initMetrics(ctx context.Context) error {
+	err := metric.Init(ctx)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func (a *App) initServiceProvider(_ context.Context) error {
 	a.provider = newServiceProvider()
 
@@ -126,6 +139,7 @@ func (a *App) initGRPCServer(ctx context.Context) error {
 		grpc.Creds(creds),
 		grpc.ChainUnaryInterceptor(
 			interceptor.LogInterceptor,
+			interceptor.MetricsInterceptor,
 			interceptor.ValidateInterceptor,
 		),
 	)
@@ -186,6 +200,19 @@ func (a *App) initSwaggerServer(_ context.Context) error {
 	return nil
 }
 
+func (a *App) initPrometheusServer(ctx context.Context) error {
+	mux := http.NewServeMux()
+	mux.Handle("/metrics", promhttp.Handler())
+
+	a.prometheusServer = &http.Server{
+		Addr:              a.provider.PrometheusConfig().Address(),
+		Handler:           mux,
+		ReadHeaderTimeout: time.Second * 5,
+	}
+
+	return nil
+}
+
 func (a *App) runGRPCServer(_ context.Context) error {
 	lis, err := net.Listen("tcp", a.provider.GRPCConfig().Address())
 	if err != nil {
@@ -231,6 +258,19 @@ func (a *App) runSwaggerServer() error {
 	return nil
 }
 
+func (a *App) runPrometheusServer() error {
+	logger.Info("Started Prometheus server",
+		zap.String("address", a.provider.PrometheusConfig().Address()),
+	)
+
+	err := a.prometheusServer.ListenAndServe()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // Run starts application and triggers closer on stop
 func (a *App) Run(ctx context.Context) error {
 	defer func() {
@@ -239,7 +279,7 @@ func (a *App) Run(ctx context.Context) error {
 	}()
 
 	wg := sync.WaitGroup{}
-	wg.Add(4)
+	wg.Add(5)
 
 	go func() {
 		defer wg.Done()
@@ -259,6 +299,13 @@ func (a *App) Run(ctx context.Context) error {
 		defer wg.Done()
 		if err := a.runSwaggerServer(); err != nil {
 			logger.Fatal("Failed to run swagger server", zap.Error(err))
+		}
+	}()
+
+	go func() {
+		defer wg.Done()
+		if err := a.runPrometheusServer(); err != nil {
+			logger.Fatal("Failed to run prometheus server", zap.Error(err))
 		}
 	}()
 

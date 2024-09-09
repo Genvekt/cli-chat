@@ -16,6 +16,9 @@ const (
 
 	swaggerHostEnv = "SWAGGER_HOST"
 	swaggerPortEnv = "SWAGGER_PORT"
+
+	prometheusHostEnv = "PROMETHEUS_HOST"
+	prometheusPortEnv = "PROMETHEUS_PORT"
 )
 
 type httpConfigEnv struct {
@@ -48,6 +51,21 @@ func NewSwaggerConfigEnv() (*httpConfigEnv, error) {
 	port := os.Getenv(swaggerPortEnv)
 	if port == "" {
 		return nil, fmt.Errorf("environment variable %q not set", swaggerPortEnv)
+	}
+
+	return &httpConfigEnv{host: host, port: port}, nil
+}
+
+// NewPrometheusConfigEnv retrieves parameters for prometheus http server
+func NewPrometheusConfigEnv() (*httpConfigEnv, error) {
+	host := os.Getenv(prometheusHostEnv)
+	if host == "" {
+		return nil, fmt.Errorf("environment variable %q not set", prometheusHostEnv)
+	}
+
+	port := os.Getenv(prometheusPortEnv)
+	if port == "" {
+		return nil, fmt.Errorf("environment variable %q not set", prometheusPortEnv)
 	}
 
 	return &httpConfigEnv{host: host, port: port}, nil

@@ -43,3 +43,14 @@ gen-cert:
 	openssl req -new -key certificate/keys/service.key -out certificate/keys/service.csr -config certificate/certificate.conf
 	openssl x509 -req -in certificate/keys/service.csr -CA certificate/keys/ca.cert -CAkey certificate/keys/ca.key -CAcreateserial \
     		-out certificate/keys/service.pem -days 365 -sha256 -extfile certificate/certificate.conf -extensions req_ext
+
+grpc-load-test:
+	ghz \
+		--proto ../../libraries/api/user/v1/user.proto \
+		--import-paths ../../libraries/api/vendor.protogen/ \
+		--call user_v1.UserV1.Get \
+		--data '{"id": 1}' \
+		--rps 100 \
+		--total 3000  \
+		--cacert certificate/keys/service.pem \
+		localhost:50050
