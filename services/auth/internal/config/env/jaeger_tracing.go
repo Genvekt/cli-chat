@@ -22,6 +22,7 @@ type jaegerTracingConfigEnv struct {
 	agentAddress string
 }
 
+// NewJaegerTracingConfigEnv retrieves jaeger configuration form env
 func NewJaegerTracingConfigEnv() (*jaegerTracingConfigEnv, error) {
 	serviceName := os.Getenv(serviceNameEnv)
 	if serviceName == "" {

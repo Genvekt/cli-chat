@@ -201,6 +201,7 @@ func (s *ServiceProvider) RefreshTokenConfig() config.TokenProviderConfig {
 	return s.refreshTokenConfig
 }
 
+// JaegerConfig provides configuration parameters for jaeger
 func (s *ServiceProvider) JaegerConfig() config.JaegerTracingConfig {
 	if s.jaegerConfig == nil {
 		cfg, err := env.NewJaegerTracingConfigEnv()

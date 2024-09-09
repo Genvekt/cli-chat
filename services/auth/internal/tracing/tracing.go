@@ -6,6 +6,7 @@ import (
 	"github.com/Genvekt/cli-chat/services/auth/internal/config"
 )
 
+// Init initialises jaeger tracer
 func Init(cfg config.JaegerTracingConfig) error {
 	tracingCfg := jaegerCfg.Configuration{
 		Sampler: &jaegerCfg.SamplerConfig{
