@@ -47,6 +47,7 @@ type ServiceProvider struct {
 	prometheusConfig  config.HTTPConfig
 	postgresConfig    config.PostgresConfig
 	redisConfig       cacheConfig.RedisConfig
+	jaegerConfig      config.JaegerTracingConfig
 	userServiceConfig config.UserServiceConfig
 
 	refreshTokenConfig config.TokenProviderConfig
@@ -198,6 +199,18 @@ func (s *ServiceProvider) RefreshTokenConfig() config.TokenProviderConfig {
 	}
 
 	return s.refreshTokenConfig
+}
+
+func (s *ServiceProvider) JaegerConfig() config.JaegerTracingConfig {
+	if s.jaegerConfig == nil {
+		cfg, err := env.NewJaegerTracingConfigEnv()
+		if err != nil {
+			logger.Fatal("failed to load jaeger tracing config", zap.Error(err))
+		}
+		s.jaegerConfig = cfg
+	}
+
+	return s.jaegerConfig
 }
 
 // RefreshTokenProvider provides refresh token

@@ -29,3 +29,11 @@ type GRPCConfig interface {
 type PostgresConfig interface {
 	DSN() string
 }
+
+// JaegerTracingConfig provides envs related to jaeger
+type JaegerTracingConfig interface {
+	ServiceName() string
+	SamplerType() string
+	SamplerParam() float64
+	AgentAddress() string
+}

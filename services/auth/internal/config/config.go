@@ -64,3 +64,11 @@ type TokenProviderConfig interface {
 	Secret() []byte
 	TTL() time.Duration
 }
+
+// JaegerTracingConfig provides envs related to jaeger
+type JaegerTracingConfig interface {
+	ServiceName() string
+	SamplerType() string
+	SamplerParam() float64
+	AgentAddress() string
+}

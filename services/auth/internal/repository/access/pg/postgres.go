@@ -7,6 +7,7 @@ import (
 
 	sq "github.com/Masterminds/squirrel"
 	"github.com/jackc/pgx/v4"
+	"github.com/opentracing/opentracing-go"
 
 	"github.com/Genvekt/cli-chat/libraries/db_client/pkg/db"
 	"github.com/Genvekt/cli-chat/services/auth/internal/model"
@@ -40,6 +41,9 @@ func (r *accessRepositoryPostgres) GetEndpointAccessRule(
 	ctx context.Context,
 	endpoint string,
 ) (*model.EndpointAccessRule, error) {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "query endpoint access rule")
+	defer span.Finish()
+
 	builderSelectOne := sq.Select(roleColumn, endpointColumn).
 		From(roleAccessRuleTable).
 		PlaceholderFormat(sq.Dollar).
