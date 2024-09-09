@@ -44,6 +44,7 @@ type ServiceProvider struct {
 	gRPCConfig        config.GRPCConfig
 	httpConfig        config.HTTPConfig
 	swaggerConfig     config.HTTPConfig
+	prometheusConfig  config.HTTPConfig
 	postgresConfig    config.PostgresConfig
 	redisConfig       cacheConfig.RedisConfig
 	userServiceConfig config.UserServiceConfig
@@ -127,6 +128,20 @@ func (s *ServiceProvider) SwaggerConfig() config.HTTPConfig {
 	}
 
 	return s.swaggerConfig
+}
+
+// PrometheusConfig provides configuration of prometheus server of this application
+func (s *ServiceProvider) PrometheusConfig() config.HTTPConfig {
+	if s.prometheusConfig == nil {
+		prometheusConfig, err := env.NewPrometheusConfigEnv()
+		if err != nil {
+			logger.Fatal("failed to load prometheus config", zap.Error(err))
+		}
+
+		s.prometheusConfig = prometheusConfig
+	}
+
+	return s.prometheusConfig
 }
 
 // PGConfig provides configuration parameters for postgres db
