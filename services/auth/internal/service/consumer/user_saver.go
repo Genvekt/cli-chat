@@ -4,12 +4,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
 
 	"github.com/IBM/sarama"
+	"go.uber.org/zap"
 
 	userApi "github.com/Genvekt/cli-chat/libraries/api/user/v1"
 	"github.com/Genvekt/cli-chat/libraries/kafka/pkg/kafka"
+	"github.com/Genvekt/cli-chat/libraries/logger/pkg/logger"
 	"github.com/Genvekt/cli-chat/services/auth/internal/config"
 	"github.com/Genvekt/cli-chat/services/auth/internal/converter"
 	"github.com/Genvekt/cli-chat/services/auth/internal/repository"
@@ -91,7 +92,7 @@ func (s *userSaverService) UserSaveHandler(ctx context.Context, msg *sarama.Cons
 		return err
 	}
 
-	log.Printf("user with id %d created from kafka\n", id)
+	logger.Info("user created from kafka", zap.Int64("id", id))
 
 	return nil
 }

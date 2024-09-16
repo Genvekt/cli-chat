@@ -10,6 +10,8 @@ replace github.com/Genvekt/cli-chat/libraries/closer => ../../libraries/closer
 
 replace github.com/Genvekt/cli-chat/libraries/kafka => ../../libraries/kafka
 
+replace github.com/Genvekt/cli-chat/libraries/logger => ../../libraries/logger
+
 go 1.22.5
 
 require (
@@ -18,6 +20,7 @@ require (
 	github.com/Genvekt/cli-chat/libraries/closer v0.0.0-00010101000000-000000000000
 	github.com/Genvekt/cli-chat/libraries/db_client v0.0.0-00010101000000-000000000000
 	github.com/Genvekt/cli-chat/libraries/kafka v0.0.0-00010101000000-000000000000
+	github.com/Genvekt/cli-chat/libraries/logger v0.0.0-00010101000000-000000000000
 	github.com/IBM/sarama v1.43.2
 	github.com/Masterminds/squirrel v1.5.4
 	github.com/brianvoe/gofakeit/v7 v7.0.4
@@ -27,10 +30,12 @@ require (
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.21.0
 	github.com/jackc/pgx/v4 v4.18.3
 	github.com/joho/godotenv v1.5.1
+	github.com/natefinch/lumberjack v2.0.0+incompatible
 	github.com/pkg/errors v0.9.1
 	github.com/rakyll/statik v0.1.7
 	github.com/rs/cors v1.11.0
 	github.com/stretchr/testify v1.9.0
+	go.uber.org/zap v1.27.0
 	golang.org/x/crypto v0.24.0
 	google.golang.org/grpc v1.65.0
 	google.golang.org/protobuf v1.34.2
@@ -67,10 +72,12 @@ require (
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/rcrowley/go-metrics v0.0.0-20201227073835-cf1acfcdf475 // indirect
 	github.com/rogpeppe/go-internal v1.12.0 // indirect
+	go.uber.org/multierr v1.10.0 // indirect
 	golang.org/x/net v0.26.0 // indirect
 	golang.org/x/sys v0.21.0 // indirect
 	golang.org/x/text v0.16.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20240723171418-e6d459c13d2a // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20240723171418-e6d459c13d2a // indirect
+	gopkg.in/natefinch/lumberjack.v2 v2.2.1 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )

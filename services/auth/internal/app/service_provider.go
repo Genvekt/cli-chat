@@ -2,14 +2,15 @@ package app
 
 import (
 	"context"
-	"log"
 
 	"github.com/IBM/sarama"
+	"go.uber.org/zap"
 
 	redigo "github.com/gomodule/redigo/redis"
 
 	"github.com/Genvekt/cli-chat/libraries/kafka/pkg/kafka"
 	"github.com/Genvekt/cli-chat/libraries/kafka/pkg/kafka/consumer"
+	"github.com/Genvekt/cli-chat/libraries/logger/pkg/logger"
 	"github.com/Genvekt/cli-chat/services/auth/internal/utils"
 	"github.com/Genvekt/cli-chat/services/auth/internal/utils/hash"
 	"github.com/Genvekt/cli-chat/services/auth/internal/utils/token"
@@ -91,7 +92,7 @@ func (s *ServiceProvider) GRPCConfig() config.GRPCConfig {
 	if s.gRPCConfig == nil {
 		grpcConfig, err := env.NewGRPCConfigEnv()
 		if err != nil {
-			log.Fatalf("failed to load grpc config: %v", err)
+			logger.Fatal("failed to load grpc config", zap.Error(err))
 		}
 
 		s.gRPCConfig = grpcConfig
@@ -105,7 +106,7 @@ func (s *ServiceProvider) HTTPConfig() config.HTTPConfig {
 	if s.httpConfig == nil {
 		httpConfig, err := env.NewHTTPConfigEnv()
 		if err != nil {
-			log.Fatalf("failed to load http config: %v", err)
+			logger.Fatal("failed to load http config", zap.Error(err))
 		}
 
 		s.httpConfig = httpConfig
@@ -119,7 +120,7 @@ func (s *ServiceProvider) SwaggerConfig() config.HTTPConfig {
 	if s.swaggerConfig == nil {
 		swaggerCongig, err := env.NewSwaggerConfigEnv()
 		if err != nil {
-			log.Fatalf("failed to load swagger config: %v", err)
+			logger.Fatal("failed to load swagger config", zap.Error(err))
 		}
 
 		s.swaggerConfig = swaggerCongig
@@ -133,7 +134,7 @@ func (s *ServiceProvider) PGConfig() config.PostgresConfig {
 	if s.postgresConfig == nil {
 		postgresConfig, err := env.NewPostgresConfigEnv()
 		if err != nil {
-			log.Fatalf("failed to load postgres config: %v", err)
+			logger.Fatal("failed to load postgres config", zap.Error(err))
 		}
 
 		s.postgresConfig = postgresConfig
@@ -147,7 +148,7 @@ func (s *ServiceProvider) RedisConfig() cacheConfig.RedisConfig {
 	if s.redisConfig == nil {
 		redisConfig, err := env.NewRedisConfig()
 		if err != nil {
-			log.Fatalf("failed to load redis config: %v", err)
+			logger.Fatal("failed to load redis config", zap.Error(err))
 		}
 
 		s.redisConfig = redisConfig
@@ -161,7 +162,7 @@ func (s *ServiceProvider) KafkaConsumerConfig() config.KafkaConsumerConfig {
 	if s.kafkaConsumerConfig == nil {
 		kafkaConsumerConfig, err := env.NewKafkaConsumerConfig()
 		if err != nil {
-			log.Fatalf("failed to load kafka consumer config: %v", err)
+			logger.Fatal("failed to load kafka consumer config", zap.Error(err))
 		}
 
 		s.kafkaConsumerConfig = kafkaConsumerConfig
@@ -175,7 +176,7 @@ func (s *ServiceProvider) RefreshTokenConfig() config.TokenProviderConfig {
 	if s.refreshTokenConfig == nil {
 		conf, err := env.NewRefreshTokenProviderConfig()
 		if err != nil {
-			log.Fatalf("failed to load refresh token config: %v", err)
+			logger.Fatal("failed to load refresh token config", zap.Error(err))
 		}
 
 		s.refreshTokenConfig = conf
@@ -198,7 +199,7 @@ func (s *ServiceProvider) AccessTokenConfig() config.TokenProviderConfig {
 	if s.accessTokenConfig == nil {
 		conf, err := env.NewAccessTokenProviderConfig()
 		if err != nil {
-			log.Fatalf("failed to load access token config: %v", err)
+			logger.Fatal("failed to load access token config: %v", zap.Error(err))
 		}
 
 		s.accessTokenConfig = conf
@@ -230,11 +231,11 @@ func (s *ServiceProvider) DBClient(ctx context.Context) db.Client {
 	if s.dbClient == nil {
 		pgClient, err := pg.New(ctx, s.PGConfig().DSN())
 		if err != nil {
-			log.Fatalf("failed to connect to postgres: %v", err)
+			logger.Fatal("failed to connect to postgres", zap.Error(err))
 		}
 
 		if err := pgClient.DB().Ping(ctx); err != nil {
-			log.Fatalf("failed to ping postgres: %v", err)
+			logger.Fatal("failed to ping postgres", zap.Error(err))
 		}
 
 		closer.Add(func() error {
@@ -318,7 +319,7 @@ func (s *ServiceProvider) ConsumerGroup() sarama.ConsumerGroup {
 			s.KafkaConsumerConfig().Config(),
 		)
 		if err != nil {
-			log.Fatalf("failed to create consumer group: %v", err)
+			logger.Fatal("failed to create consumer group: %v", zap.Error(err))
 		}
 
 		s.consumerGroup = consumerGroup
@@ -355,7 +356,7 @@ func (s *ServiceProvider) UserSaverConfig() config.UserSaverConfig {
 	if s.userSaverConfig == nil {
 		conf, err := env.NewUserSaverConfigEnv()
 		if err != nil {
-			log.Fatalf("failed to load user saver config: %v", err)
+			logger.Fatal("failed to load user saver config", zap.Error(err))
 		}
 
 		s.userSaverConfig = conf
@@ -383,7 +384,7 @@ func (s *ServiceProvider) UserServiceConfig() config.UserServiceConfig {
 	if s.userServiceConfig == nil {
 		userServiceConfig, err := env.NewUserServiceConfigEnv()
 		if err != nil {
-			log.Fatalf("failed to load user service config: %v", err)
+			logger.Fatal("failed to load user service config", zap.Error(err))
 		}
 		s.userServiceConfig = userServiceConfig
 	}

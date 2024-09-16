@@ -1,11 +1,11 @@
 package producer
 
 import (
-	"log"
-
 	"github.com/IBM/sarama"
+	"go.uber.org/zap"
 
 	"github.com/Genvekt/cli-chat/libraries/kafka/pkg/kafka"
+	"github.com/Genvekt/cli-chat/libraries/logger/pkg/logger"
 )
 
 var _ kafka.Producer[sarama.ProducerMessage] = (*kafkaProducer)(nil)
@@ -27,7 +27,11 @@ func (p *kafkaProducer) SendMessage(msg *sarama.ProducerMessage) error {
 		return err
 	}
 
-	log.Printf("message sent to partition %d with offset %d\n", partition, offset)
+	logger.Debug("kafka message sent",
+		zap.Int32("partition", partition),
+		zap.Int64("offset", offset),
+		zap.String("topic", msg.Topic),
+	)
 
 	return nil
 }

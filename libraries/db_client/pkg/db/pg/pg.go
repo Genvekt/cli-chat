@@ -2,13 +2,14 @@ package pg
 
 import (
 	"context"
-	"fmt"
-	"log"
 
 	"github.com/georgysavva/scany/pgxscan"
 	"github.com/jackc/pgconn"
 	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
+	"go.uber.org/zap"
+
+	"github.com/Genvekt/cli-chat/libraries/logger/pkg/logger"
 
 	"github.com/Genvekt/cli-chat/libraries/db_client/pkg/db/prettier"
 
@@ -36,8 +37,6 @@ func NewDB(dbc *pgxpool.Pool) *pg {
 
 // ScanOneContext selects one row and parses it into provided type
 func (p *pg) ScanOneContext(ctx context.Context, dest interface{}, q db.Query, args ...interface{}) error {
-	logQuery(ctx, q, args...)
-
 	row, err := p.QueryContext(ctx, q, args...)
 	if err != nil {
 		return err
@@ -48,8 +47,6 @@ func (p *pg) ScanOneContext(ctx context.Context, dest interface{}, q db.Query, a
 
 // ScanAllContext selects several rows and parses them into provided type
 func (p *pg) ScanAllContext(ctx context.Context, dest interface{}, q db.Query, args ...interface{}) error {
-	logQuery(ctx, q, args...)
-
 	rows, err := p.QueryContext(ctx, q, args...)
 	if err != nil {
 		return err
@@ -114,11 +111,10 @@ func MakeContextTx(ctx context.Context, tx pgx.Tx) context.Context {
 	return context.WithValue(ctx, TxKey, tx)
 }
 
-func logQuery(ctx context.Context, q db.Query, args ...interface{}) {
+func logQuery(_ context.Context, q db.Query, args ...interface{}) {
 	prettyQuery := prettier.Pretty(q.QueryRaw, prettier.PlaceholderDollar, args...)
-	log.Println(
-		ctx,
-		fmt.Sprintf("sql: %s", q.Name),
-		fmt.Sprintf("query: %s", prettyQuery),
+	logger.Debug("postgres query",
+		zap.String("sql", q.Name),
+		zap.String("query", prettyQuery),
 	)
 }

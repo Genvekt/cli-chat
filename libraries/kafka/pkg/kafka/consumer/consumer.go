@@ -3,12 +3,12 @@ package consumer
 import (
 	"context"
 	"errors"
-	"log"
 	"strings"
 
 	"github.com/IBM/sarama"
 
 	"github.com/Genvekt/cli-chat/libraries/kafka/pkg/kafka"
+	"github.com/Genvekt/cli-chat/libraries/logger/pkg/logger"
 )
 
 var _ kafka.Consumer[sarama.ConsumerMessage] = (*kafkaConsumer)(nil)
@@ -56,6 +56,6 @@ func (c *kafkaConsumer) consume(ctx context.Context, topicName string) error {
 			return ctx.Err()
 		}
 
-		log.Printf("rebalancing...\n")
+		logger.Info("rebalancing kafka consumer..")
 	}
 }

@@ -19,6 +19,8 @@ generate-mocks:
 
 generate-swagger:
 	cp ../../libraries/api/user/swagger/api.swagger.json ./pkg/swagger/userApi.swagger.json
+	cp ../../libraries/api/auth/swagger/api.swagger.json ./pkg/swagger/authApi.swagger.json
+	cp ../../libraries/api/access/swagger/api.swagger.json ./pkg/swagger/accessApi.swagger.json
 	$(LOCAL_BIN)/statik -src=pkg/swagger/ -include='*.css,*.html,*.js,*.json,*.png'
 
 test:

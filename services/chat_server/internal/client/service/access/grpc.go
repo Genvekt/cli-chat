@@ -2,8 +2,6 @@ package access
 
 import (
 	"context"
-	"fmt"
-	"log"
 
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/types/known/emptypb"
@@ -26,21 +24,10 @@ func NewAccessGrpcClient(conn *grpc.ClientConn) *accessGRPCClient {
 }
 
 func (c *accessGRPCClient) Check(ctx context.Context, req *accessApi.CheckRequest) (*emptypb.Empty, error) {
-	LogRequest(ctx, req)
-
 	resp, err := c.client.Check(ctx, req)
 	if err != nil {
 		return nil, err
 	}
 
 	return resp, nil
-}
-
-// LogRequest logs request sent to grpc client
-func LogRequest(ctx context.Context, req interface{}) {
-	log.Println(
-		ctx,
-		fmt.Sprintf("qrpc: %T", req),
-		fmt.Sprintf("request: %+v", req),
-	)
 }

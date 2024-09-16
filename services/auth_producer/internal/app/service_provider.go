@@ -1,13 +1,13 @@
 package app
 
 import (
-	"log"
-
 	"github.com/IBM/sarama"
+	"go.uber.org/zap"
 
 	"github.com/Genvekt/cli-chat/libraries/closer/pkg/closer"
 	"github.com/Genvekt/cli-chat/libraries/kafka/pkg/kafka"
 	"github.com/Genvekt/cli-chat/libraries/kafka/pkg/kafka/producer"
+	"github.com/Genvekt/cli-chat/libraries/logger/pkg/logger"
 	kafkaCli "github.com/Genvekt/cli-chat/services/auth_producer/internal/client/kafka"
 	kafkaUserCli "github.com/Genvekt/cli-chat/services/auth_producer/internal/client/kafka/user"
 	"github.com/Genvekt/cli-chat/services/auth_producer/internal/config/env"
@@ -43,7 +43,7 @@ func (s *ServiceProvider) HTTPConfig() config.HTTPConfig {
 	if s.httpConfig == nil {
 		cong, err := env.NewHTTPConfigEnv()
 		if err != nil {
-			log.Fatalf("error loading http config: %v", err)
+			logger.Fatal("error loading http config", zap.Error(err))
 		}
 
 		s.httpConfig = cong
@@ -57,7 +57,7 @@ func (s *ServiceProvider) KafkaProducerConfig() config.KafkaProducerConfig {
 	if s.kafkaProducerConfig == nil {
 		conf, err := env.NewKafkaProducerConfig()
 		if err != nil {
-			log.Fatalf("Error loading kafka producer config: %v", err)
+			logger.Fatal("Error loading kafka producer config", zap.Error(err))
 		}
 
 		s.kafkaProducerConfig = conf
@@ -74,7 +74,7 @@ func (s *ServiceProvider) SyncProducer() sarama.SyncProducer {
 			s.KafkaProducerConfig().Config(),
 		)
 		if err != nil {
-			log.Fatalf("Error creating kafka sync producer: %v", err)
+			logger.Fatal("Error creating kafka sync producer", zap.Error(err))
 		}
 
 		s.syncProducer = syncProducer
@@ -99,7 +99,7 @@ func (s *ServiceProvider) UserKafkaClientConfig() config.UserKafkaClientConfig {
 	if s.userKafkaClientConfig == nil {
 		conf, err := env.NewUserCreatorConfigEnv()
 		if err != nil {
-			log.Fatalf("Error loading user creator config: %v", err)
+			logger.Fatal("Error loading user creator config", zap.Error(err))
 		}
 
 		s.userKafkaClientConfig = conf
