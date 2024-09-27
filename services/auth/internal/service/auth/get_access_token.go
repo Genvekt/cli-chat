@@ -15,6 +15,7 @@ func (s *authService) GetAccessToken(ctx context.Context, refreshToken string) (
 	}
 
 	accessToken, err := s.accessTokenProvider.Generate(ctx, &model.User{
+		ID:   claims.ID,
 		Name: claims.Username,
 		Role: claims.Role,
 	})

@@ -7,6 +7,11 @@ install-deps:
 lint:
 	$(LOCAL_BIN)/golangci-lint run ./... --config ../../.golangci.pipeline.yaml
 
+generate-mocks:
+	go generate ./internal/service/
+	go generate ./internal/repository/
+	go generate ./internal/config/
+
 test:
 	go clean -testcache
 	go test ./... -covermode count -coverpkg=github.com/Genvekt/cli-chat/services/chat-server/internal/service/...,github.com/Genvekt/cli-chat/services/chat-server/internal/api/... -count 5
