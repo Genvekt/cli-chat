@@ -16,14 +16,23 @@ func (s *chatService) SendMessage(ctx context.Context, message *model.Message) e
 		return fmt.Errorf("failed to check the membership of user in chat: %v", err)
 	}
 
+	// check user membership
 	if !isMember {
 		return fmt.Errorf("user is not a member of a chat")
 	}
 
+	// save message to storage
 	err = s.messageRepo.Create(ctx, message)
 	if err != nil {
 		return fmt.Errorf("cannot create message: %v", err)
 	}
+
+	// send to active chat. Do nothing for inactive chats
+	s.mxChat.Lock()
+	if chatConnection, isActive := s.chatConnections[message.ChatID]; isActive {
+		chatConnection.Buffer <- message
+	}
+	s.mxChat.Unlock()
 
 	return nil
 }

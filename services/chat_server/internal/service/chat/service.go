@@ -1,7 +1,10 @@
 package chat
 
 import (
+	"sync"
+
 	"github.com/Genvekt/cli-chat/libraries/db_client/pkg/db"
+	"github.com/Genvekt/cli-chat/services/chat-server/internal/model"
 
 	serviceCli "github.com/Genvekt/cli-chat/services/chat-server/internal/client/service"
 	"github.com/Genvekt/cli-chat/services/chat-server/internal/repository"
@@ -16,6 +19,9 @@ type chatService struct {
 	messageRepo    repository.MessageRepository
 	userCli        serviceCli.AuthClient
 	txManager      db.TxManager
+
+	mxChat          sync.RWMutex
+	chatConnections map[int64]*model.ChatConnection
 }
 
 // NewChatService initialises service layer for chat business logic
@@ -32,5 +38,7 @@ func NewChatService(
 		messageRepo:    messageRepository,
 		userCli:        userCli,
 		txManager:      txManager,
+
+		chatConnections: map[int64]*model.ChatConnection{},
 	}
 }

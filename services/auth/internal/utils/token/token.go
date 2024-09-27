@@ -38,6 +38,7 @@ func (t *tokenProvider) Generate(ctx context.Context, user *model.User) (string,
 		StandardClaims: jwt.StandardClaims{
 			ExpiresAt: time.Now().Add(t.ttl).Unix(),
 		},
+		ID:       user.ID,
 		Username: user.Name,
 		Role:     user.Role,
 	}

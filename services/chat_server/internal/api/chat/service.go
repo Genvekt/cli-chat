@@ -13,5 +13,7 @@ type Service struct {
 
 // NewService initialises chat api implementation
 func NewService(chatService service.ChatService) *Service {
-	return &Service{chatService: chatService}
+	return &Service{
+		chatService: chatService,
+	}
 }

@@ -15,6 +15,7 @@ func (s *authService) GetRefreshToken(ctx context.Context, oldRefreshTocken stri
 	}
 
 	refreshToken, err := s.refreshTokenProvider.Generate(ctx, &model.User{
+		ID:   claims.ID,
 		Name: claims.Username,
 		Role: claims.Role,
 	})
